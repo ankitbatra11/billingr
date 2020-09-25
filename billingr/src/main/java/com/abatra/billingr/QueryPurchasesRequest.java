@@ -25,7 +25,7 @@ public class QueryPurchasesRequest {
         return new Builder();
     }
 
-    private static class Builder {
+    public static class Builder {
 
         private SkuType skuType;
         private boolean acknowledgePurchases = true;
