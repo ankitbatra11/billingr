@@ -171,8 +171,8 @@ public class GoogleBillingUseCase implements BillingUseCase {
             Log.d(LOG_TAG, "startConnection result=" + result);
 
             if (loadBillingRequest.getLoadBillingListener() != null) {
-                GoogleLoadBillingResult availabilityResult = new GoogleLoadBillingResult(result);
-                loadBillingRequest.getLoadBillingListener().onBillingAvailabilityStatusUpdated(availabilityResult);
+                GoogleLoadBillingResult loadBillingResult = new GoogleLoadBillingResult(result);
+                loadBillingRequest.getLoadBillingListener().onBillingAvailabilityStatusUpdated(loadBillingResult);
             }
 
             if (!loadBillingRequest.getAcknowledgePurchasesSkuTypes().isEmpty()) {
