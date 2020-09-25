@@ -1,0 +1,3 @@
+include ':billingr'
+include ':app'
+rootProject.name = "billingr demo"
