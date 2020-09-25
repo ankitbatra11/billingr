@@ -1,6 +1,7 @@
 package com.abatra.billingr.google;
 
-import com.android.billingclient.api.BillingClient;
+import androidx.annotation.NonNull;
+
 import com.android.billingclient.api.BillingResult;
 
 import java.util.Locale;
@@ -28,6 +29,7 @@ public class GoogleBillingResult {
         return billingResult.getResponseCode() != BILLING_UNAVAILABLE;
     }
 
+    @NonNull
     @Override
     public String toString() {
         return String.format(Locale.ENGLISH, "GoogleBillingResult: responseCode=%d debugMessage=%s",

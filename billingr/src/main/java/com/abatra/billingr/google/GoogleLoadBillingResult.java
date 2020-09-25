@@ -1,22 +1,22 @@
 package com.abatra.billingr.google;
 
-import com.abatra.billingr.BillingAvailabilityResult;
+import com.abatra.billingr.LoadBillingResult;
 
-public class GoogleBillingAvailabilityResult implements BillingAvailabilityResult {
+public class GoogleLoadBillingResult implements LoadBillingResult {
 
     private final GoogleBillingResult googleBillingResult;
 
-    public GoogleBillingAvailabilityResult(GoogleBillingResult googleBillingResult) {
+    public GoogleLoadBillingResult(GoogleBillingResult googleBillingResult) {
         this.googleBillingResult = googleBillingResult;
     }
 
     @Override
-    public boolean isOk() {
+    public boolean isLoadedSuccessfully() {
         return googleBillingResult.isOk();
     }
 
     @Override
-    public boolean isAvailable() {
+    public boolean isBillingAvailable() {
         return googleBillingResult.isAvailable();
     }
 }
