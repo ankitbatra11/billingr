@@ -1,4 +1,7 @@
 apply plugin: 'com.android.library'
+apply plugin: 'com.github.dcendents.android-maven'
+
+group = 'com.github.ankitbatra11'
 
 android {
     compileSdkVersion 30
@@ -31,6 +34,7 @@ dependencies {
 
     implementation group: 'androidx.annotation', name: 'annotation', version: '1.1.0'
     implementation group: 'com.android.billingclient', name: 'billing', version: BILLING_CLIENT_VERSION
+    implementation group: 'androidx.lifecycle', name: 'lifecycle-runtime', version: '2.2.0'
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'

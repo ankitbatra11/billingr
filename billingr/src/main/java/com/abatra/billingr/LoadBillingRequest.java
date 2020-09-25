@@ -24,18 +24,17 @@ public class LoadBillingRequest {
         return acknowledgePurchasesSkuTypes;
     }
 
-    private static class Builder {
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
 
         private BillingAvailabilityListener billingAvailabilityListener;
         private boolean enablePendingPurchases = true;
-        private boolean acknowledgePurchases = true;
         private final Collection<SkuType> acknowledgePurchasesSkuTypes = new HashSet<>();
 
         private Builder() {
-        }
-
-        public void setAcknowledgePurchases(boolean acknowledgePurchases) {
-            this.acknowledgePurchases = acknowledgePurchases;
         }
 
         public Builder setBillingAvailabilityListener(BillingAvailabilityListener billingAvailabilityListener) {

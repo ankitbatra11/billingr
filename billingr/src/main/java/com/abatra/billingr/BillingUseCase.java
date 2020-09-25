@@ -1,6 +1,18 @@
 package com.abatra.billingr;
 
-public interface BillingUseCase {
+import android.content.Context;
+
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleObserver;
+import androidx.lifecycle.OnLifecycleEvent;
+
+import com.abatra.billingr.google.GoogleBillingUseCase;
+
+public interface BillingUseCase extends LifecycleObserver {
+
+    static BillingUseCase google(Context context) {
+        return new GoogleBillingUseCase(context);
+    }
 
     void loadBilling(LoadBillingRequest loadBillingRequest);
 
@@ -8,5 +20,6 @@ public interface BillingUseCase {
 
     void queryPurchases(QueryPurchasesRequest queryPurchasesRequest);
 
+    @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     void destroy();
 }
