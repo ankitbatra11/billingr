@@ -3,7 +3,6 @@ package com.abatra.billingr;
 public class QueryPurchasesRequest {
 
     private SkuType skuType;
-    private boolean acknowledgePurchases;
     private PurchaseListener purchaseListener;
 
     private QueryPurchasesRequest() {
@@ -11,10 +10,6 @@ public class QueryPurchasesRequest {
 
     public SkuType getSkuType() {
         return skuType;
-    }
-
-    public boolean isAcknowledgePurchases() {
-        return acknowledgePurchases;
     }
 
     public PurchaseListener getPurchaseListener() {
@@ -28,18 +23,13 @@ public class QueryPurchasesRequest {
     public static class Builder {
 
         private SkuType skuType;
-        private boolean acknowledgePurchases = true;
         private PurchaseListener purchaseListener;
 
         private Builder() {
         }
 
-        public void setSkuType(SkuType skuType) {
+        public Builder setSkuType(SkuType skuType) {
             this.skuType = skuType;
-        }
-
-        public Builder setAcknowledgePurchases(boolean acknowledgePurchases) {
-            this.acknowledgePurchases = acknowledgePurchases;
             return this;
         }
 
@@ -51,7 +41,6 @@ public class QueryPurchasesRequest {
         public QueryPurchasesRequest build() {
             QueryPurchasesRequest queryPurchasesRequest = new QueryPurchasesRequest();
             queryPurchasesRequest.skuType = skuType;
-            queryPurchasesRequest.acknowledgePurchases = acknowledgePurchases;
             queryPurchasesRequest.purchaseListener = purchaseListener;
             return queryPurchasesRequest;
         }
