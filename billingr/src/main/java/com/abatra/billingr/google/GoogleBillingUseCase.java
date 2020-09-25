@@ -84,7 +84,15 @@ public class GoogleBillingUseCase implements BillingUseCase {
     }
 
     @Override
+    public void acknowledgePurchases(SkuType skuType) {
+        billingClient.queryPurchases(GoogleBillingUtils.getSkuType(skuType));
+    }
+
+    @Override
     public void destroy() {
+
+        purchaseUpdatedListener = null;
+
         if (billingClient != null) {
             if (billingClient.isReady()) {
                 billingClient.endConnection();
@@ -203,6 +211,7 @@ public class GoogleBillingUseCase implements BillingUseCase {
         }
 
         private void acknowledge(Purchase purchase) {
+
             if (!purchase.isAcknowledged()) {
 
                 AcknowledgePurchaseParams acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
@@ -211,7 +220,7 @@ public class GoogleBillingUseCase implements BillingUseCase {
 
                 billingClient.acknowledgePurchase(acknowledgePurchaseParams, billingResult -> {
                     GoogleBillingResult result = GoogleBillingResult.wrap(billingResult);
-                    Log.d(LOG_TAG, "acknowledgePurchase result=" + result + " orderId=" + purchase.getOrderId());
+                    Log.d(LOG_TAG, "orderId=" + purchase.getOrderId() + " acknowledgePurchase result=" + result);
                 });
             }
         }
