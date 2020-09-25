@@ -5,15 +5,15 @@ import java.util.HashSet;
 
 public class LoadBillingRequest {
 
-    private BillingAvailabilityListener billingAvailabilityListener;
+    private LoadBillingListener loadBillingListener;
     private boolean enablePendingPurchases;
     private final Collection<SkuType> acknowledgePurchasesSkuTypes = new HashSet<>();
 
     private LoadBillingRequest() {
     }
 
-    public BillingAvailabilityListener getBillingAvailabilityListener() {
-        return billingAvailabilityListener;
+    public LoadBillingListener getLoadBillingListener() {
+        return loadBillingListener;
     }
 
     public boolean isEnablePendingPurchases() {
@@ -30,15 +30,15 @@ public class LoadBillingRequest {
 
     public static class Builder {
 
-        private BillingAvailabilityListener billingAvailabilityListener;
+        private LoadBillingListener loadBillingListener;
         private boolean enablePendingPurchases = true;
         private final Collection<SkuType> acknowledgePurchasesSkuTypes = new HashSet<>();
 
         private Builder() {
         }
 
-        public Builder setBillingAvailabilityListener(BillingAvailabilityListener billingAvailabilityListener) {
-            this.billingAvailabilityListener = billingAvailabilityListener;
+        public Builder setLoadBillingListener(LoadBillingListener loadBillingListener) {
+            this.loadBillingListener = loadBillingListener;
             return this;
         }
 
@@ -49,7 +49,7 @@ public class LoadBillingRequest {
 
         public LoadBillingRequest build() {
             LoadBillingRequest loadBillingRequest = new LoadBillingRequest();
-            loadBillingRequest.billingAvailabilityListener = billingAvailabilityListener;
+            loadBillingRequest.loadBillingListener = loadBillingListener;
             loadBillingRequest.enablePendingPurchases = enablePendingPurchases;
             loadBillingRequest.acknowledgePurchasesSkuTypes.addAll(acknowledgePurchasesSkuTypes);
             return loadBillingRequest;
