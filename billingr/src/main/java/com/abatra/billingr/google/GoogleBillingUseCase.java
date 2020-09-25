@@ -51,7 +51,7 @@ public class GoogleBillingUseCase implements BillingUseCase {
         purchaseUpdatedListener.setBillingClient(billingClient);
 
         if (!billingClient.isReady()) {
-            billingClient.startConnection(new GoogleBillingClientStateListener(loadBillingRequest, billingClient));
+            billingClient.startConnection(new GoogleBillingClientStateListener(loadBillingRequest));
         }
     }
 
@@ -154,13 +154,11 @@ public class GoogleBillingUseCase implements BillingUseCase {
         }
     }
 
-    private static class GoogleBillingClientStateListener implements BillingClientStateListener {
+    private class GoogleBillingClientStateListener implements BillingClientStateListener {
 
         private final LoadBillingRequest loadBillingRequest;
-        private final BillingClient billingClient;
 
-        private GoogleBillingClientStateListener(LoadBillingRequest loadBillingRequest, BillingClient billingClient) {
-            this.billingClient = billingClient;
+        private GoogleBillingClientStateListener(LoadBillingRequest loadBillingRequest) {
             this.loadBillingRequest = loadBillingRequest;
         }
 
@@ -172,12 +170,16 @@ public class GoogleBillingUseCase implements BillingUseCase {
 
             if (loadBillingRequest.getLoadBillingListener() != null) {
                 GoogleLoadBillingResult loadBillingResult = new GoogleLoadBillingResult(result);
-                loadBillingRequest.getLoadBillingListener().onBillingAvailabilityStatusUpdated(loadBillingResult);
+                loadBillingRequest.getLoadBillingListener().onLoadBillingResultReceived(loadBillingResult);
             }
-
-            if (!loadBillingRequest.getAcknowledgePurchasesSkuTypes().isEmpty()) {
-                for (SkuType skuType : loadBillingRequest.getAcknowledgePurchasesSkuTypes()) {
-                    billingClient.queryPurchases(GoogleBillingUtils.getSkuType(skuType));
+            if (result.isOk()) {
+                if (!loadBillingRequest.getAcknowledgePurchasesSkuTypes().isEmpty()) {
+                    for (SkuType skuType : loadBillingRequest.getAcknowledgePurchasesSkuTypes()) {
+                        acknowledgePurchases(skuType);
+                    }
+                }
+                if (loadBillingRequest.getQueryPurchasesRequest() != null) {
+                    queryPurchases(loadBillingRequest.getQueryPurchasesRequest());
                 }
             }
         }

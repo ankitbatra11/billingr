@@ -8,6 +8,7 @@ public class LoadBillingRequest {
     private LoadBillingListener loadBillingListener;
     private boolean enablePendingPurchases;
     private final Collection<SkuType> acknowledgePurchasesSkuTypes = new HashSet<>();
+    private QueryPurchasesRequest queryPurchasesRequest;
 
     private LoadBillingRequest() {
     }
@@ -28,11 +29,16 @@ public class LoadBillingRequest {
         return new Builder();
     }
 
+    public QueryPurchasesRequest getQueryPurchasesRequest() {
+        return queryPurchasesRequest;
+    }
+
     public static class Builder {
 
         private LoadBillingListener loadBillingListener;
         private boolean enablePendingPurchases = true;
         private final Collection<SkuType> acknowledgePurchasesSkuTypes = new HashSet<>();
+        private QueryPurchasesRequest queryPurchasesRequest;
 
         private Builder() {
         }
@@ -47,11 +53,17 @@ public class LoadBillingRequest {
             return this;
         }
 
+        public Builder setQueryPurchasesRequest(QueryPurchasesRequest queryPurchasesRequest) {
+            this.queryPurchasesRequest = queryPurchasesRequest;
+            return this;
+        }
+
         public LoadBillingRequest build() {
             LoadBillingRequest loadBillingRequest = new LoadBillingRequest();
             loadBillingRequest.loadBillingListener = loadBillingListener;
             loadBillingRequest.enablePendingPurchases = enablePendingPurchases;
             loadBillingRequest.acknowledgePurchasesSkuTypes.addAll(acknowledgePurchasesSkuTypes);
+            loadBillingRequest.queryPurchasesRequest = queryPurchasesRequest;
             return loadBillingRequest;
         }
     }
