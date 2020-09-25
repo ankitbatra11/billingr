@@ -1,5 +1,6 @@
 package com.abatra.billingr;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -48,8 +49,8 @@ public class LoadBillingRequest {
             return this;
         }
 
-        public Builder acknowledgePurchases(SkuType skuType) {
-            acknowledgePurchasesSkuTypes.add(skuType);
+        public Builder acknowledgePurchases(SkuType... skuType) {
+            acknowledgePurchasesSkuTypes.addAll(Arrays.asList(skuType));
             return this;
         }
 
