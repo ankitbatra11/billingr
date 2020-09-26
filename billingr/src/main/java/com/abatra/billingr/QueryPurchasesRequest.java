@@ -4,7 +4,6 @@ public class QueryPurchasesRequest {
 
     private SkuType skuType;
     private boolean acknowledgePurchases;
-    private PurchaseListener purchaseListener;
 
     private QueryPurchasesRequest() {
     }
@@ -17,10 +16,6 @@ public class QueryPurchasesRequest {
         return acknowledgePurchases;
     }
 
-    public PurchaseListener getPurchaseListener() {
-        return purchaseListener;
-    }
-
     public static Builder builder() {
         return new Builder();
     }
@@ -29,7 +24,6 @@ public class QueryPurchasesRequest {
 
         private SkuType skuType;
         private boolean acknowledgePurchases = true;
-        private PurchaseListener purchaseListener;
 
         private Builder() {
         }
@@ -43,16 +37,10 @@ public class QueryPurchasesRequest {
             return this;
         }
 
-        public Builder setPurchaseListener(PurchaseListener purchaseListener) {
-            this.purchaseListener = purchaseListener;
-            return this;
-        }
-
         public QueryPurchasesRequest build() {
             QueryPurchasesRequest queryPurchasesRequest = new QueryPurchasesRequest();
             queryPurchasesRequest.skuType = skuType;
             queryPurchasesRequest.acknowledgePurchases = acknowledgePurchases;
-            queryPurchasesRequest.purchaseListener = purchaseListener;
             return queryPurchasesRequest;
         }
     }

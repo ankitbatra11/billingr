@@ -1,5 +1,6 @@
 package com.abatra.billingr;
 
+import android.app.Activity;
 import android.content.Context;
 
 import androidx.lifecycle.Lifecycle;
@@ -21,6 +22,8 @@ public interface BillingUseCase extends LifecycleObserver {
     void querySkus(QuerySkuRequest querySkuRequest);
 
     void queryPurchases(QueryPurchasesRequest queryPurchasesRequest);
+
+    void purchase(Activity activity, Sku sku);
 
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     void destroy();
