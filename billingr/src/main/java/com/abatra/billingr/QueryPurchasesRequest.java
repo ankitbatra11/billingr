@@ -11,7 +11,6 @@ public class QueryPurchasesRequest {
     public SkuType getSkuType() {
         return skuType;
     }
-
     public boolean isAcknowledgePurchases() {
         return acknowledgePurchases;
     }
@@ -28,12 +27,8 @@ public class QueryPurchasesRequest {
         private Builder() {
         }
 
-        public void setSkuType(SkuType skuType) {
+        public Builder setSkuType(SkuType skuType) {
             this.skuType = skuType;
-        }
-
-        public Builder setAcknowledgePurchases(boolean acknowledgePurchases) {
-            this.acknowledgePurchases = acknowledgePurchases;
             return this;
         }
 
