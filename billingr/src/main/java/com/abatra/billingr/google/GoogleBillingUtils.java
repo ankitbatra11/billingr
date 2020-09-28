@@ -3,7 +3,6 @@ package com.abatra.billingr.google;
 import com.abatra.billingr.Purchase;
 import com.abatra.billingr.SkuType;
 import com.android.billingclient.api.BillingClient;
-import com.android.billingclient.api.PurchaseHistoryRecord;
 
 public class GoogleBillingUtils {
 
@@ -20,9 +19,7 @@ public class GoogleBillingUtils {
         throw new IllegalArgumentException("Invalid skuType=" + skuType);
     }
 
-    public static Purchase toPurchase(PurchaseHistoryRecord purchaseHistoryRecord) {
-        Purchase purchase = new Purchase();
-        purchase.setSku(purchaseHistoryRecord.getSku());
-        return purchase;
+    public static Purchase toPurchase(com.android.billingclient.api.Purchase purchase) {
+        return new Purchase(purchase.getSku(), purchase.getOrderId());
     }
 }

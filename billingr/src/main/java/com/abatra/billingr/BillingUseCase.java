@@ -17,8 +17,6 @@ public interface BillingUseCase extends LifecycleObserver {
 
     void loadBilling(LoadBillingRequest loadBillingRequest);
 
-    void acknowledgePurchases(SkuType skuType);
-
     void querySkus(QuerySkuRequest querySkuRequest);
 
     void queryPurchases(QueryPurchasesRequest queryPurchasesRequest);

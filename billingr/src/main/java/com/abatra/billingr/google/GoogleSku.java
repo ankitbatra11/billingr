@@ -19,6 +19,11 @@ public class GoogleSku implements Sku {
     }
 
     @Override
+    public String getId() {
+        return skuDetails.getSku();
+    }
+
+    @Override
     public SkuType getType() {
         return skuType;
     }
