@@ -43,6 +43,11 @@ public class QuerySkuRequest {
             return this;
         }
 
+        public Builder setSkuListener(SkuListener skuListener) {
+            this.skuListener = skuListener;
+            return this;
+        }
+
         public QuerySkuRequest build() {
             QuerySkuRequest querySkuRequest = new QuerySkuRequest();
             querySkuRequest.skuIdsByType.putAll(skuIdsByType);
