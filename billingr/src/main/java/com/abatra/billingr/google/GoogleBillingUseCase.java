@@ -20,8 +20,6 @@ import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingFlowParams;
 import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.Purchase;
-import com.android.billingclient.api.PurchaseHistoryRecord;
-import com.android.billingclient.api.PurchaseHistoryResponseListener;
 import com.android.billingclient.api.PurchasesUpdatedListener;
 import com.android.billingclient.api.SkuDetails;
 import com.android.billingclient.api.SkuDetailsParams;
@@ -33,12 +31,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import bolts.Task;
+
 public class GoogleBillingUseCase implements BillingUseCase {
 
     private static final String LOG_TAG = "GoogleBillingClient";
 
     private final Context context;
-    private final GooglePurchaseHistoryResponseListener purchaseHistoryResponseListener;
     private final GoogleBillingPurchaseUpdatedListener purchaseUpdatedListener;
 
     private BillingClient billingClient;
@@ -46,7 +45,6 @@ public class GoogleBillingUseCase implements BillingUseCase {
 
     public GoogleBillingUseCase(Context context) {
         this.context = context;
-        purchaseHistoryResponseListener = new GooglePurchaseHistoryResponseListener();
         purchaseUpdatedListener = new GoogleBillingPurchaseUpdatedListener();
     }
 
@@ -83,13 +81,40 @@ public class GoogleBillingUseCase implements BillingUseCase {
 
     @Override
     public void queryPurchases(QueryPurchasesRequest queryPurchasesRequest) {
-        billingClient.queryPurchaseHistoryAsync(GoogleBillingUtils.getSkuType(queryPurchasesRequest.getSkuType()),
-                purchaseHistoryResponseListener);
+        String googleSkuType = GoogleBillingUtils.getSkuType(queryPurchasesRequest.getSkuType());
+        Task.callInBackground(() -> billingClient.queryPurchases(googleSkuType)).continueWith(task -> {
+            List<com.abatra.billingr.Purchase> purchases = new ArrayList<>();
+            if (task.getError() != null) {
+                Log.e(LOG_TAG, "queryPurchases failed!", task.getError());
+            } else {
+                Purchase.PurchasesResult purchasesResult = task.getResult();
+                if (purchasesResult != null && purchasesResult.getPurchasesList() != null) {
+                    for (Purchase purchase : purchasesResult.getPurchasesList()) {
+                        if (purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
+                            acknowledge(purchase);
+                            purchases.add(GoogleBillingUtils.toPurchase(purchase));
+                        }
+                    }
+                }
+            }
+            purchaseListener.onPurchasesUpdated(purchases);
+            return purchases;
+        });
     }
 
-    @Override
-    public void acknowledgePurchases(SkuType skuType) {
-        billingClient.queryPurchases(GoogleBillingUtils.getSkuType(skuType));
+    private void acknowledge(Purchase purchase) {
+
+        if (purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED && !purchase.isAcknowledged()) {
+
+            AcknowledgePurchaseParams acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
+                    .setPurchaseToken(purchase.getPurchaseToken())
+                    .build();
+
+            billingClient.acknowledgePurchase(acknowledgePurchaseParams, billingResult -> {
+                GoogleBillingResult result = GoogleBillingResult.wrap(billingResult);
+                Log.d(LOG_TAG, "orderId=" + purchase.getOrderId() + " acknowledgePurchase result=" + result);
+            });
+        }
     }
 
     @Override
@@ -113,25 +138,9 @@ public class GoogleBillingUseCase implements BillingUseCase {
         }
     }
 
-    private class GooglePurchaseHistoryResponseListener implements PurchaseHistoryResponseListener {
-
-        @Override
-        public void onPurchaseHistoryResponse(@NonNull BillingResult billingResult,
-                                              @Nullable List<PurchaseHistoryRecord> list) {
-
-            GoogleBillingResult result = GoogleBillingResult.wrap(billingResult);
-            Log.d(LOG_TAG, "queryPurchaseHistoryAsync result=" + result);
-
-            if (purchaseListener != null && result.isOk() && list != null) {
-                List<com.abatra.billingr.Purchase> purchases = new ArrayList<>();
-                for (PurchaseHistoryRecord record : list) {
-                    purchases.add(GoogleBillingUtils.toPurchase(record));
-                }
-                purchaseListener.onPurchasesUpdated(purchases);
-            }
-        }
-    }
-
+    /**
+     * Called when Skus are loaded.
+     */
     private static class GoogleSkuDetailsResponseListener implements SkuDetailsResponseListener {
 
         private final SkuType skuType;
@@ -158,6 +167,9 @@ public class GoogleBillingUseCase implements BillingUseCase {
         }
     }
 
+    /**
+     * Called when the {@link BillingClient} is loaded.
+     */
     private class GoogleBillingClientStateListener implements BillingClientStateListener {
 
         private final LoadBillingRequest loadBillingRequest;
@@ -177,11 +189,6 @@ public class GoogleBillingUseCase implements BillingUseCase {
                 loadBillingRequest.getLoadBillingListener().onLoadBillingResultReceived(loadBillingResult);
             }
             if (result.isOk()) {
-                if (!loadBillingRequest.getAcknowledgePurchasesSkuTypes().isEmpty()) {
-                    for (SkuType skuType : loadBillingRequest.getAcknowledgePurchasesSkuTypes()) {
-                        acknowledgePurchases(skuType);
-                    }
-                }
                 if (loadBillingRequest.getQueryPurchasesRequest() != null) {
                     queryPurchases(loadBillingRequest.getQueryPurchasesRequest());
                 }
@@ -194,6 +201,9 @@ public class GoogleBillingUseCase implements BillingUseCase {
         }
     }
 
+    /**
+     * Called when a purchase is made.
+     */
     private class GoogleBillingPurchaseUpdatedListener implements PurchasesUpdatedListener {
 
         @Override
@@ -207,21 +217,6 @@ public class GoogleBillingUseCase implements BillingUseCase {
                 for (Purchase purchase : list) {
                     acknowledge(purchase);
                 }
-            }
-        }
-
-        private void acknowledge(Purchase purchase) {
-
-            if (!purchase.isAcknowledged()) {
-
-                AcknowledgePurchaseParams acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
-                        .setPurchaseToken(purchase.getPurchaseToken())
-                        .build();
-
-                billingClient.acknowledgePurchase(acknowledgePurchaseParams, billingResult -> {
-                    GoogleBillingResult result = GoogleBillingResult.wrap(billingResult);
-                    Log.d(LOG_TAG, "orderId=" + purchase.getOrderId() + " acknowledgePurchase result=" + result);
-                });
             }
         }
     }

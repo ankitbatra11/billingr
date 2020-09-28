@@ -1,14 +1,9 @@
 package com.abatra.billingr;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-
 public class LoadBillingRequest {
 
     private LoadBillingListener loadBillingListener;
     private boolean enablePendingPurchases;
-    private final Collection<SkuType> acknowledgePurchasesSkuTypes = new HashSet<>();
     private QueryPurchasesRequest queryPurchasesRequest;
     private PurchaseListener purchaseListener;
 
@@ -21,10 +16,6 @@ public class LoadBillingRequest {
 
     public boolean isEnablePendingPurchases() {
         return enablePendingPurchases;
-    }
-
-    public Collection<SkuType> getAcknowledgePurchasesSkuTypes() {
-        return acknowledgePurchasesSkuTypes;
     }
 
     public static Builder builder() {
@@ -43,7 +34,6 @@ public class LoadBillingRequest {
 
         private LoadBillingListener loadBillingListener;
         private boolean enablePendingPurchases = true;
-        private final Collection<SkuType> acknowledgePurchasesSkuTypes = new HashSet<>();
         private QueryPurchasesRequest queryPurchasesRequest;
         private PurchaseListener purchaseListener;
 
@@ -52,11 +42,6 @@ public class LoadBillingRequest {
 
         public Builder setLoadBillingListener(LoadBillingListener loadBillingListener) {
             this.loadBillingListener = loadBillingListener;
-            return this;
-        }
-
-        public Builder acknowledgePurchases(SkuType... skuType) {
-            acknowledgePurchasesSkuTypes.addAll(Arrays.asList(skuType));
             return this;
         }
 
@@ -74,7 +59,6 @@ public class LoadBillingRequest {
             LoadBillingRequest loadBillingRequest = new LoadBillingRequest();
             loadBillingRequest.loadBillingListener = loadBillingListener;
             loadBillingRequest.enablePendingPurchases = enablePendingPurchases;
-            loadBillingRequest.acknowledgePurchasesSkuTypes.addAll(acknowledgePurchasesSkuTypes);
             loadBillingRequest.queryPurchasesRequest = queryPurchasesRequest;
             loadBillingRequest.purchaseListener = purchaseListener;
             return loadBillingRequest;

@@ -32,9 +32,10 @@ android {
 
 dependencies {
 
-    implementation group: 'androidx.annotation', name: 'annotation', version: '1.1.0'
+    api group: 'androidx.annotation', name: 'annotation', version: '1.1.0'
+    api group: 'androidx.lifecycle', name: 'lifecycle-runtime', version: '2.2.0'
+    api group: 'com.parse.bolts', name: 'bolts-tasks', version: BOLTS_VERSION
     implementation group: 'com.android.billingclient', name: 'billing', version: BILLING_CLIENT_VERSION
-    implementation group: 'androidx.lifecycle', name: 'lifecycle-runtime', version: '2.2.0'
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
