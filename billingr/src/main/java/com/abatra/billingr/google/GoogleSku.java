@@ -40,6 +40,6 @@ public class GoogleSku implements Sku {
 
     @Override
     public long getPrice() {
-        return skuDetails.getPriceAmountMicros();
+        return Double.valueOf(skuDetails.getPriceAmountMicros() / Math.pow(10, 6)).longValue();
     }
 }
