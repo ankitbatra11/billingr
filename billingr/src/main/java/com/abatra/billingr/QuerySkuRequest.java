@@ -33,7 +33,7 @@ public class QuerySkuRequest {
         private Builder() {
         }
 
-        public Builder addSku(SkuType skuType, String skuId) {
+        public Builder forSku(SkuType skuType, String skuId) {
             Collection<String> skuIds = skuIdsByType.get(skuType);
             if (skuIds == null) {
                 skuIds = new HashSet<>();
