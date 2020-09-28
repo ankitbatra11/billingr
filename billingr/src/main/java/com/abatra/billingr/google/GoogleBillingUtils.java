@@ -1,10 +1,14 @@
 package com.abatra.billingr.google;
 
+import android.util.Log;
+
 import com.abatra.billingr.Purchase;
 import com.abatra.billingr.SkuType;
 import com.android.billingclient.api.BillingClient;
 
 public class GoogleBillingUtils {
+
+    private static final String LOG_TAG = "GoogleBillingUtils";
 
     private GoogleBillingUtils() {
     }
@@ -21,5 +25,22 @@ public class GoogleBillingUtils {
 
     public static Purchase toPurchase(com.android.billingclient.api.Purchase purchase) {
         return new Purchase(purchase.getSku(), purchase.getOrderId());
+    }
+
+    /**
+     * @param inAppProductName Premium (SCAR)
+     * @return Premium
+     */
+    public static String removeAppName(String inAppProductName) {
+        String result = inAppProductName;
+        int indexOf = inAppProductName.indexOf('(');
+        if (indexOf != -1) {
+            try {
+                result = inAppProductName.substring(0, indexOf).trim();
+            } catch (Throwable e) {
+                Log.e(LOG_TAG, "Removing appName failed for sku=" + inAppProductName, e);
+            }
+        }
+        return result;
     }
 }
