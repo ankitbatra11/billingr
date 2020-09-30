@@ -6,8 +6,6 @@ import com.abatra.billingr.Sku;
 import com.abatra.billingr.SkuType;
 import com.android.billingclient.api.SkuDetails;
 
-import java.util.Locale;
-
 public class GoogleSku implements Sku {
 
     private final SkuType skuType;
