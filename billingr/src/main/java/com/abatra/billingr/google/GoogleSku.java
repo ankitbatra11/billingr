@@ -43,14 +43,19 @@ public class GoogleSku implements Sku {
     }
 
     @Override
-    public long getPrice() {
-        return Double.valueOf(skuDetails.getPriceAmountMicros() / Math.pow(10, 6)).longValue();
+    public long getPriceAmount() {
+        return Double.valueOf(getPriceAmountMicros() / Math.pow(10, 6)).longValue();
+    }
+
+    @Override
+    public long getPriceAmountMicros() {
+        return skuDetails.getPriceAmountMicros();
     }
 
     @NonNull
     @Override
     public String toString() {
         return String.format(Locale.ENGLISH, "GoogleSku(id=%s, type=%s title=%s currency=%s price=%d)",
-                getId(), getType(), getTitle(), getCurrency(), getPrice());
+                getId(), getType(), getTitle(), getCurrency(), getPriceAmount());
     }
 }

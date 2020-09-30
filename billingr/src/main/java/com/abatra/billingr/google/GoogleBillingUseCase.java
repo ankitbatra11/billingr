@@ -134,6 +134,7 @@ public class GoogleBillingUseCase implements BillingUseCase {
                 for (SkuDetails skuDetails : list == null ? Collections.<SkuDetails>emptyList() : list) {
                     skus.add(new GoogleSku(skuType, skuDetails));
                 }
+                Log.d(LOG_TAG,"skusLoaded=" + skus);
                 querySkuRequest.getSkuListener().onSkuLoaded(skus);
             }
         }

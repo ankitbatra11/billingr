@@ -10,5 +10,7 @@ public interface Sku {
 
     String getCurrency();
 
-    long getPrice();
+    long getPriceAmount();
+
+    long getPriceAmountMicros();
 }
