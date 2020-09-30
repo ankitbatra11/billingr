@@ -55,7 +55,6 @@ public class GoogleSku implements Sku {
     @NonNull
     @Override
     public String toString() {
-        return String.format(Locale.ENGLISH, "GoogleSku(id=%s, type=%s title=%s currency=%s price=%d)",
-                getId(), getType(), getTitle(), getCurrency(), getPriceAmount());
+        return Sku.toString(this);
     }
 }
