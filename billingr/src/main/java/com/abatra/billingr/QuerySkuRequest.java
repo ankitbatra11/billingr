@@ -1,5 +1,6 @@
 package com.abatra.billingr;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,13 +34,13 @@ public class QuerySkuRequest {
         private Builder() {
         }
 
-        public Builder forSku(SkuType skuType, String skuId) {
+        public Builder forSku(SkuType skuType, String... skuId) {
             Collection<String> skuIds = skuIdsByType.get(skuType);
             if (skuIds == null) {
                 skuIds = new HashSet<>();
                 skuIdsByType.put(skuType, skuIds);
             }
-            skuIds.add(skuId);
+            skuIds.addAll(Arrays.asList(skuId));
             return this;
         }
 
