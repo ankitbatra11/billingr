@@ -8,7 +8,7 @@ import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
 
-import com.abatra.billingr.cache.CachedBillingr;
+import com.abatra.billingr.cache.BillingrCache;
 import com.abatra.billingr.google.GoogleBillingr;
 import com.abatra.billingr.gson.GsonFactory;
 import com.abatra.billingr.load.LoadBillingRequest;
@@ -27,7 +27,7 @@ public interface Billingr extends LifecycleObserver {
     }
 
     static Billingr cached(Context context, Billingr billingr) {
-        return new CachedBillingr(billingr,
+        return new BillingrCache(billingr,
                 PreferenceManager.getDefaultSharedPreferences(context),
                 GsonFactory.createGson());
     }

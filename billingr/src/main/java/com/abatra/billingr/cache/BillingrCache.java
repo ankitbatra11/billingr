@@ -21,15 +21,15 @@ import java.util.Map;
 
 import bolts.Task;
 
-public class CachedBillingr implements Billingr {
+public class BillingrCache implements Billingr {
 
-    private static final String LOG_TAG = "CachedBillingr";
+    private static final String LOG_TAG = "BillingrCache";
 
     private final Billingr billingr;
     private final SharedPreferences sharedPreferences;
     private final Gson gson;
 
-    public CachedBillingr(Billingr billingr, SharedPreferences sharedPreferences, Gson gson) {
+    public BillingrCache(Billingr billingr, SharedPreferences sharedPreferences, Gson gson) {
         this.billingr = billingr;
         this.sharedPreferences = sharedPreferences;
         this.gson = gson;
@@ -87,9 +87,10 @@ public class CachedBillingr implements Billingr {
             List<Sku> result = new ArrayList<>();
             for (Map.Entry<SkuType, Collection<String>> entry : querySkuRequest.getSkuIdsByType().entrySet()) {
                 for (String id : entry.getValue()) {
-                    String json = sharedPreferences.getString(createSkuKey(entry.getKey(), id), "");
-                    if (json != null && !json.isEmpty()) {
-                        result.add(gson.fromJson(json, Sku.class));
+                    try {
+                        result.add(tryGettingSkuFromCache(entry.getKey(), id));
+                    } catch (Throwable t) {
+                        Log.e(LOG_TAG, "Failed to get sku from cache!", t);
                     }
                 }
             }
@@ -109,6 +110,14 @@ public class CachedBillingr implements Billingr {
             }
             return null;
         });
+    }
+
+    private Sku tryGettingSkuFromCache(SkuType skuType, String skuId) {
+        String json = sharedPreferences.getString(createSkuKey(skuType, skuId), "");
+        if (json != null && !json.isEmpty()) {
+            return gson.fromJson(json, Sku.class);
+        }
+        throw new RuntimeException("Sku of type=" + skuType + " and id=" + skuId + " is not cached!");
     }
 
     private String createSkuKey(SkuType skuType, String id) {
