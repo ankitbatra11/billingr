@@ -7,12 +7,14 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.abatra.billingr.BillingUseCase;
-import com.abatra.billingr.LoadBillingRequest;
-import com.abatra.billingr.QueryPurchasesRequest;
-import com.abatra.billingr.QuerySkuRequest;
-import com.abatra.billingr.Sku;
-import com.abatra.billingr.SkuType;
+import com.abatra.billingr.Billingr;
+import com.abatra.billingr.load.LoadBillingRequest;
+import com.abatra.billingr.exception.LoadingPurchasesFailedException;
+import com.abatra.billingr.exception.LoadingSkuFailedException;
+import com.abatra.billingr.purchase.QueryPurchasesRequest;
+import com.abatra.billingr.sku.QuerySkuRequest;
+import com.abatra.billingr.sku.Sku;
+import com.abatra.billingr.sku.SkuType;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingFlowParams;
@@ -29,25 +31,25 @@ import java.util.Map;
 
 import bolts.Task;
 
-public class GoogleBillingUseCase implements BillingUseCase {
+public class GoogleBillingr implements Billingr {
 
     private static final String LOG_TAG = "GoogleBillingClient";
 
     private final Context context;
     private BillingClient billingClient;
-    private GooglePurchaseHandler googlePurchaseHandler;
+    private GooglePurchasesUpdatedListener googlePurchasesUpdatedListener;
 
-    public GoogleBillingUseCase(Context context) {
+    public GoogleBillingr(Context context) {
         this.context = context;
     }
 
     @Override
     public void loadBilling(LoadBillingRequest loadBillingRequest) {
 
-        googlePurchaseHandler = new GooglePurchaseHandler(loadBillingRequest.getPurchaseListener());
+        googlePurchasesUpdatedListener = new GooglePurchasesUpdatedListener(loadBillingRequest.getPurchaseListener());
 
         billingClient = createBillingClient(loadBillingRequest);
-        googlePurchaseHandler.setBillingClient(billingClient);
+        googlePurchasesUpdatedListener.setBillingClient(billingClient);
 
         if (!billingClient.isReady()) {
             billingClient.startConnection(new GoogleBillingClientStateListener(loadBillingRequest));
@@ -59,7 +61,7 @@ public class GoogleBillingUseCase implements BillingUseCase {
         if (loadBillingRequest.isEnablePendingPurchases()) {
             builder.enablePendingPurchases();
         }
-        builder.setListener(googlePurchaseHandler);
+        builder.setListener(googlePurchasesUpdatedListener);
         return builder.build();
     }
 
@@ -78,12 +80,18 @@ public class GoogleBillingUseCase implements BillingUseCase {
 
     @Override
     public void queryPurchases(QueryPurchasesRequest queryPurchasesRequest) {
+
+        Log.v(LOG_TAG, "Querying purchases with request=" + queryPurchasesRequest);
+
         String googleSkuType = GoogleBillingUtils.getSkuType(queryPurchasesRequest.getSkuType());
         Task.callInBackground(() -> billingClient.queryPurchases(googleSkuType)).continueWith(task -> {
             if (task.getError() != null) {
                 Log.e(LOG_TAG, "queryPurchases failed!", task.getError());
+                googlePurchasesUpdatedListener.onLoadingPurchasesFailed(new LoadingPurchasesFailedException(task.getError()));
+            } else {
+                Log.v(LOG_TAG, "purchases result=" + task.getResult());
+                googlePurchasesUpdatedListener.onPurchasesResultReceived(task.getResult());
             }
-            googlePurchaseHandler.onPurchasesResultReceived(task.getResult());
             return null;
         });
     }
@@ -100,7 +108,7 @@ public class GoogleBillingUseCase implements BillingUseCase {
     @Override
     public void destroy() {
 
-        googlePurchaseHandler = null;
+        googlePurchasesUpdatedListener = null;
 
         if (billingClient != null) {
             if (billingClient.isReady()) {
@@ -129,13 +137,18 @@ public class GoogleBillingUseCase implements BillingUseCase {
             GoogleBillingResult result = GoogleBillingResult.wrap(billingResult);
             Log.d(LOG_TAG, "querySkuDetailsAsync result=" + result);
 
-            if (querySkuRequest.getSkuListener() != null && result.isOk()) {
-                List<Sku> skus = new ArrayList<>();
-                for (SkuDetails skuDetails : list == null ? Collections.<SkuDetails>emptyList() : list) {
-                    skus.add(new GoogleSku(skuType, skuDetails));
+            if (querySkuRequest.getSkuListener() != null) {
+                if (result.isOk()) {
+                    List<Sku> skus = new ArrayList<>();
+                    for (SkuDetails skuDetails : list == null ? Collections.<SkuDetails>emptyList() : list) {
+                        skus.add(new GoogleSku(skuType, skuDetails));
+                    }
+                    Log.d(LOG_TAG, "skusLoaded=" + skus);
+                    querySkuRequest.getSkuListener().onSkuLoaded(skus);
+                } else {
+                    String message = billingResult.getDebugMessage();
+                    querySkuRequest.getSkuListener().onLoadingSkusFailed(new LoadingSkuFailedException(message));
                 }
-                Log.d(LOG_TAG,"skusLoaded=" + skus);
-                querySkuRequest.getSkuListener().onSkuLoaded(skus);
             }
         }
     }

@@ -1,4 +1,7 @@
-package com.abatra.billingr;
+package com.abatra.billingr.load;
+
+import com.abatra.billingr.purchase.PurchaseListener;
+import com.abatra.billingr.purchase.QueryPurchasesRequest;
 
 public class LoadBillingRequest {
 
