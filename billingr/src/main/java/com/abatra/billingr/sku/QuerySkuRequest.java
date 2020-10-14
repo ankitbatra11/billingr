@@ -46,7 +46,7 @@ public class QuerySkuRequest {
             return this;
         }
 
-        public Builder setQueryFromCache(boolean queryFromCache) {
+        public Builder queryFromCache(boolean queryFromCache) {
             this.queryFromCache = queryFromCache;
             return this;
         }
