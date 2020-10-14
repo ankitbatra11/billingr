@@ -42,8 +42,15 @@ public class BillingrCache implements Billingr {
 
     @Override
     public void querySkus(QuerySkuRequest querySkuRequest) {
+        if (querySkuRequest.queryFromCache()) {
+            querySkusFromCache(querySkuRequest, new LoadingSkuFailedException("Failed to load skus from cache!"));
+        } else {
+            billingr.querySkus(decorate(querySkuRequest));
+        }
+    }
 
-        QuerySkuRequest request = QuerySkuRequest.builder()
+    private QuerySkuRequest decorate(QuerySkuRequest querySkuRequest) {
+        return QuerySkuRequest.builder()
                 .forSku(querySkuRequest.getSkuIdsByType())
                 .setSkuListener(new SkuListener() {
                     @Override
@@ -58,8 +65,6 @@ public class BillingrCache implements Billingr {
                     }
                 })
                 .build();
-
-        billingr.querySkus(request);
     }
 
     private void cache(List<Sku> skus) {

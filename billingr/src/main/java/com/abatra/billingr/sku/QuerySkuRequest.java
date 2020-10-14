@@ -10,6 +10,7 @@ public class QuerySkuRequest {
 
     private final Map<SkuType, Collection<String>> skuIdsByType = new HashMap<>();
     private SkuListener skuListener;
+    private boolean queryFromCache;
 
     private QuerySkuRequest() {
     }
@@ -22,6 +23,10 @@ public class QuerySkuRequest {
         return skuListener;
     }
 
+    public boolean queryFromCache() {
+        return queryFromCache;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -30,6 +35,7 @@ public class QuerySkuRequest {
 
         private final Map<SkuType, Collection<String>> skuIdsByType = new HashMap<>();
         private SkuListener skuListener;
+        private boolean queryFromCache;
 
         private Builder() {
         }
@@ -37,6 +43,11 @@ public class QuerySkuRequest {
         public Builder forSku(Map<SkuType, Collection<String>> skuIdsByType) {
             this.skuIdsByType.clear();
             this.skuIdsByType.putAll(skuIdsByType);
+            return this;
+        }
+
+        public Builder setQueryFromCache(boolean queryFromCache) {
+            this.queryFromCache = queryFromCache;
             return this;
         }
 
@@ -59,6 +70,7 @@ public class QuerySkuRequest {
             QuerySkuRequest querySkuRequest = new QuerySkuRequest();
             querySkuRequest.skuIdsByType.putAll(skuIdsByType);
             querySkuRequest.skuListener = skuListener;
+            querySkuRequest.queryFromCache = queryFromCache;
             return querySkuRequest;
         }
     }
