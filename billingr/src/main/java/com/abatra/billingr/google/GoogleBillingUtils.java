@@ -2,8 +2,8 @@ package com.abatra.billingr.google;
 
 import android.util.Log;
 
-import com.abatra.billingr.Purchase;
-import com.abatra.billingr.SkuType;
+import com.abatra.billingr.purchase.Purchase;
+import com.abatra.billingr.sku.SkuType;
 import com.android.billingclient.api.BillingClient;
 
 public class GoogleBillingUtils {

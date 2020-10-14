@@ -1,4 +1,4 @@
-package com.abatra.billingr;
+package com.abatra.billingr.sku;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -32,6 +32,12 @@ public class QuerySkuRequest {
         private SkuListener skuListener;
 
         private Builder() {
+        }
+
+        public Builder forSku(Map<SkuType, Collection<String>> skuIdsByType) {
+            this.skuIdsByType.clear();
+            this.skuIdsByType.putAll(skuIdsByType);
+            return this;
         }
 
         public Builder forSku(SkuType skuType, String... skuId) {

@@ -1,6 +1,6 @@
 package com.abatra.billingr.google;
 
-import com.abatra.billingr.LoadBillingResult;
+import com.abatra.billingr.load.LoadBillingResult;
 
 public class GoogleLoadBillingResult implements LoadBillingResult {
 

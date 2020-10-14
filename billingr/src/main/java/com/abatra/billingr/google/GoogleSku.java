@@ -2,8 +2,8 @@ package com.abatra.billingr.google;
 
 import androidx.annotation.NonNull;
 
-import com.abatra.billingr.Sku;
-import com.abatra.billingr.SkuType;
+import com.abatra.billingr.sku.Sku;
+import com.abatra.billingr.sku.SkuType;
 import com.android.billingclient.api.SkuDetails;
 
 public class GoogleSku implements Sku {
@@ -48,6 +48,16 @@ public class GoogleSku implements Sku {
     @Override
     public long getPriceAmountMicros() {
         return skuDetails.getPriceAmountMicros();
+    }
+
+    @Override
+    public String getJson() {
+        return skuDetails.getOriginalJson();
+    }
+
+    @Override
+    public String getAffiliation() {
+        return Sku.AFFILIATION_GOOGLE;
     }
 
     @NonNull

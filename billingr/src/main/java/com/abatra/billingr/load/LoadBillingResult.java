@@ -1,4 +1,4 @@
-package com.abatra.billingr;
+package com.abatra.billingr.load;
 
 public interface LoadBillingResult {
 

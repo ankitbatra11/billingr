@@ -5,16 +5,16 @@ import android.os.Bundle;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.abatra.billingr.BillingUseCase;
-import com.abatra.billingr.LoadBillingRequest;
+import com.abatra.billingr.Billingr;
+import com.abatra.billingr.load.LoadBillingRequest;
 
 public class BillingDemoActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        BillingUseCase billingUseCase = BillingUseCase.google(getApplicationContext());
-        getLifecycle().addObserver(billingUseCase);
-        billingUseCase.loadBilling(LoadBillingRequest.builder().build());
+        Billingr billingr = Billingr.google(getApplicationContext());
+        getLifecycle().addObserver(billingr);
+        billingr.loadBilling(LoadBillingRequest.builder().build());
     }
 }

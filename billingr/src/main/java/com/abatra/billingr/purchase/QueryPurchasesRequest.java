@@ -1,4 +1,8 @@
-package com.abatra.billingr;
+package com.abatra.billingr.purchase;
+
+import androidx.annotation.NonNull;
+
+import com.abatra.billingr.sku.SkuType;
 
 public class QueryPurchasesRequest {
 
@@ -13,6 +17,15 @@ public class QueryPurchasesRequest {
     }
     public boolean isAcknowledgePurchases() {
         return acknowledgePurchases;
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        return "QueryPurchasesRequest{" +
+                "skuType=" + skuType +
+                ", acknowledgePurchases=" + acknowledgePurchases +
+                '}';
     }
 
     public static Builder builder() {
