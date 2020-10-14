@@ -11,8 +11,7 @@ public class GsonFactory {
 
     public static Gson createGson() {
         return new GsonBuilder()
-                .registerTypeAdapter(Sku.class, new SkuDeserializer())
-                .registerTypeAdapter(Sku.class, new SkuSerializer())
+                .registerTypeHierarchyAdapter(Sku.class, new SkuSerde())
                 .create();
     }
 }
