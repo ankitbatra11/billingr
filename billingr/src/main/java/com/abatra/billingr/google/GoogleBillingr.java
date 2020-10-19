@@ -23,6 +23,7 @@ import com.android.billingclient.api.SkuDetails;
 import com.android.billingclient.api.SkuDetailsParams;
 import com.android.billingclient.api.SkuDetailsResponseListener;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -158,14 +159,19 @@ public class GoogleBillingr implements Billingr {
      */
     private class GoogleBillingClientStateListener implements BillingClientStateListener {
 
-        private final LoadBillingRequest loadBillingRequest;
+        private final WeakReference<LoadBillingRequest> loadBillingRequest;
 
         private GoogleBillingClientStateListener(LoadBillingRequest loadBillingRequest) {
-            this.loadBillingRequest = loadBillingRequest;
+            this.loadBillingRequest = new WeakReference<>(loadBillingRequest);
         }
 
         @Override
         public void onBillingSetupFinished(@NonNull BillingResult billingResult) {
+
+            LoadBillingRequest loadBillingRequest = this.loadBillingRequest.get();
+            if (loadBillingRequest == null) {
+                return;
+            }
 
             GoogleBillingResult result = GoogleBillingResult.wrap(billingResult);
             Log.d(LOG_TAG, "startConnection result=" + result);
