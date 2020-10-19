@@ -13,6 +13,7 @@ import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.PurchasesUpdatedListener;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,11 +21,11 @@ class GooglePurchasesUpdatedListener implements PurchasesUpdatedListener {
 
     private static final String LOG_TAG = "GooglePurchasesUpdated";
 
-    private final PurchaseListener purchaseListener;
+    private final WeakReference<PurchaseListener> purchaseListener;
     private BillingClient billingClient;
 
     GooglePurchasesUpdatedListener(PurchaseListener purchaseListener) {
-        this.purchaseListener = purchaseListener;
+        this.purchaseListener = new WeakReference<>(purchaseListener);
     }
 
     void setBillingClient(BillingClient billingClient) {
@@ -57,7 +58,10 @@ class GooglePurchasesUpdatedListener implements PurchasesUpdatedListener {
                 }
             }
         }
-        purchaseListener.onPurchasesUpdated(result);
+        PurchaseListener purchaseListener = this.purchaseListener.get();
+        if (purchaseListener != null) {
+            purchaseListener.onPurchasesUpdated(result);
+        }
     }
 
     private void acknowledge(Purchase purchase) {
@@ -76,6 +80,9 @@ class GooglePurchasesUpdatedListener implements PurchasesUpdatedListener {
     }
 
     public void onLoadingPurchasesFailed(LoadingPurchasesFailedException e) {
-        purchaseListener.onLoadingPurchasesFailed(e);
+        PurchaseListener purchaseListener = this.purchaseListener.get();
+        if (purchaseListener != null) {
+            purchaseListener.onLoadingPurchasesFailed(e);
+        }
     }
 }
