@@ -12,6 +12,7 @@ import com.abatra.billingr.sku.QuerySkuRequest;
 import com.abatra.billingr.sku.Sku;
 import com.abatra.billingr.sku.SkuListener;
 import com.abatra.billingr.sku.SkuType;
+import com.abatra.billingr.utils.WeakReferenceUtils;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;
@@ -55,7 +56,10 @@ public class BillingrCache implements Billingr {
                 .setSkuListener(new SkuListener() {
                     @Override
                     public void onSkuLoaded(List<Sku> skus) {
-                        querySkuRequest.getSkuListener().onSkuLoaded(skus);
+                        SkuListener skuListener = querySkuRequest.getSkuListener();
+                        if (skuListener != null) {
+                            skuListener.onSkuLoaded(skus);
+                        }
                         cache(skus);
                     }
 
@@ -103,14 +107,17 @@ public class BillingrCache implements Billingr {
 
         }).continueWith(task ->
         {
-            if (task.getError() != null) {
-                querySkuRequest.getSkuListener().onLoadingSkusFailed(new LoadingSkuFailedException(task.getError()));
-            } else {
-                List<Sku> skus = task.getResult();
-                if (skus != null && !skus.isEmpty()) {
-                    querySkuRequest.getSkuListener().onSkuLoaded(skus);
+            SkuListener skuListener = querySkuRequest.getSkuListener();
+            if (skuListener != null) {
+                if (task.getError() != null) {
+                    skuListener.onLoadingSkusFailed(new LoadingSkuFailedException(task.getError()));
                 } else {
-                    querySkuRequest.getSkuListener().onLoadingSkusFailed(e);
+                    List<Sku> skus = task.getResult();
+                    if (skus != null && !skus.isEmpty()) {
+                        skuListener.onSkuLoaded(skus);
+                    } else {
+                        skuListener.onLoadingSkusFailed(e);
+                    }
                 }
             }
             return null;

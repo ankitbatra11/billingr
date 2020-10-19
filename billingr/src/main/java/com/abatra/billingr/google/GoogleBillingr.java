@@ -11,6 +11,7 @@ import com.abatra.billingr.Billingr;
 import com.abatra.billingr.load.LoadBillingRequest;
 import com.abatra.billingr.exception.LoadingPurchasesFailedException;
 import com.abatra.billingr.exception.LoadingSkuFailedException;
+import com.abatra.billingr.purchase.PurchaseListener;
 import com.abatra.billingr.purchase.QueryPurchasesRequest;
 import com.abatra.billingr.sku.QuerySkuRequest;
 import com.abatra.billingr.sku.Sku;
@@ -47,7 +48,7 @@ public class GoogleBillingr implements Billingr {
     @Override
     public void loadBilling(LoadBillingRequest loadBillingRequest) {
 
-        googlePurchasesUpdatedListener = new GooglePurchasesUpdatedListener(loadBillingRequest.getPurchaseListener());
+        googlePurchasesUpdatedListener = new GooglePurchasesUpdatedListener(loadBillingRequest);
 
         billingClient = createBillingClient(loadBillingRequest);
         googlePurchasesUpdatedListener.setBillingClient(billingClient);
@@ -159,19 +160,14 @@ public class GoogleBillingr implements Billingr {
      */
     private class GoogleBillingClientStateListener implements BillingClientStateListener {
 
-        private final WeakReference<LoadBillingRequest> loadBillingRequest;
+        private final LoadBillingRequest loadBillingRequest;
 
         private GoogleBillingClientStateListener(LoadBillingRequest loadBillingRequest) {
-            this.loadBillingRequest = new WeakReference<>(loadBillingRequest);
+            this.loadBillingRequest = loadBillingRequest;
         }
 
         @Override
         public void onBillingSetupFinished(@NonNull BillingResult billingResult) {
-
-            LoadBillingRequest loadBillingRequest = this.loadBillingRequest.get();
-            if (loadBillingRequest == null) {
-                return;
-            }
 
             GoogleBillingResult result = GoogleBillingResult.wrap(billingResult);
             Log.d(LOG_TAG, "startConnection result=" + result);
