@@ -12,7 +12,6 @@ import com.abatra.billingr.sku.QuerySkuRequest;
 import com.abatra.billingr.sku.Sku;
 import com.abatra.billingr.sku.SkuListener;
 import com.abatra.billingr.sku.SkuType;
-import com.abatra.billingr.utils.WeakReferenceUtils;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;

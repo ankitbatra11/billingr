@@ -8,13 +8,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.abatra.billingr.Billingr;
-import com.abatra.billingr.load.LoadBillingRequest;
 import com.abatra.billingr.exception.LoadingPurchasesFailedException;
 import com.abatra.billingr.exception.LoadingSkuFailedException;
-import com.abatra.billingr.purchase.PurchaseListener;
+import com.abatra.billingr.load.LoadBillingRequest;
 import com.abatra.billingr.purchase.QueryPurchasesRequest;
 import com.abatra.billingr.sku.QuerySkuRequest;
 import com.abatra.billingr.sku.Sku;
+import com.abatra.billingr.sku.SkuListener;
 import com.abatra.billingr.sku.SkuType;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClientStateListener;
@@ -24,7 +24,6 @@ import com.android.billingclient.api.SkuDetails;
 import com.android.billingclient.api.SkuDetailsParams;
 import com.android.billingclient.api.SkuDetailsResponseListener;
 
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -139,17 +138,18 @@ public class GoogleBillingr implements Billingr {
             GoogleBillingResult result = GoogleBillingResult.wrap(billingResult);
             Log.d(LOG_TAG, "querySkuDetailsAsync result=" + result);
 
-            if (querySkuRequest.getSkuListener() != null) {
+            SkuListener skuListener = querySkuRequest.getSkuListener();
+            if (skuListener != null) {
                 if (result.isOk()) {
                     List<Sku> skus = new ArrayList<>();
                     for (SkuDetails skuDetails : list == null ? Collections.<SkuDetails>emptyList() : list) {
                         skus.add(new GoogleSku(skuType, skuDetails));
                     }
                     Log.d(LOG_TAG, "skusLoaded=" + skus);
-                    querySkuRequest.getSkuListener().onSkuLoaded(skus);
+                    skuListener.onSkuLoaded(skus);
                 } else {
                     String message = billingResult.getDebugMessage();
-                    querySkuRequest.getSkuListener().onLoadingSkusFailed(new LoadingSkuFailedException(message));
+                    skuListener.onLoadingSkusFailed(new LoadingSkuFailedException(message));
                 }
             }
         }
