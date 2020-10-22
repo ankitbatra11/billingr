@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
 
 import bolts.Task;
 
@@ -150,7 +151,10 @@ public class GoogleBillingr implements Billingr {
                 } else {
                     String message = billingResult.getDebugMessage();
                     skuListener.onLoadingSkusFailed(new LoadingSkuFailedException(message));
+                    Log.w(LOG_TAG, "loading skus failed");
                 }
+            } else {
+                Log.i(LOG_TAG, "skuListener is not present");
             }
         }
     }
