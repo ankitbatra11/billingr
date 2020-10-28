@@ -52,21 +52,7 @@ public class BillingrCache implements Billingr {
     private QuerySkuRequest decorate(QuerySkuRequest querySkuRequest) {
         return QuerySkuRequest.builder()
                 .forSku(querySkuRequest.getSkuIdsByType())
-                .setSkuListener(new SkuListener() {
-                    @Override
-                    public void onSkuLoaded(List<Sku> skus) {
-                        SkuListener skuListener = querySkuRequest.getSkuListener();
-                        if (skuListener != null) {
-                            skuListener.onSkuLoaded(skus);
-                        }
-                        cache(skus);
-                    }
-
-                    @Override
-                    public void onLoadingSkusFailed(LoadingSkuFailedException e) {
-                        querySkusFromCache(querySkuRequest, e);
-                    }
-                })
+                .setSkuListener(new CacheSkuListener(querySkuRequest))
                 .build();
     }
 
@@ -148,5 +134,28 @@ public class BillingrCache implements Billingr {
     @Override
     public void destroy() {
         billingr.destroy();
+    }
+
+    private class CacheSkuListener implements SkuListener {
+
+        private final QuerySkuRequest querySkuRequest;
+
+        private CacheSkuListener(QuerySkuRequest querySkuRequest) {
+            this.querySkuRequest = querySkuRequest;
+        }
+
+        @Override
+        public void onSkuLoaded(List<Sku> skus) {
+            SkuListener skuListener = querySkuRequest.getSkuListener();
+            if (skuListener != null) {
+                skuListener.onSkuLoaded(skus);
+            }
+            cache(skus);
+        }
+
+        @Override
+        public void onLoadingSkusFailed(LoadingSkuFailedException e) {
+            querySkusFromCache(querySkuRequest, e);
+        }
     }
 }
