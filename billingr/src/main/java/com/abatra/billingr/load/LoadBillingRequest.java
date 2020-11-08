@@ -5,23 +5,19 @@ import androidx.annotation.Nullable;
 import com.abatra.billingr.purchase.PurchaseListener;
 import com.abatra.billingr.purchase.QueryPurchasesRequest;
 
-import java.lang.ref.WeakReference;
-
-import static com.abatra.billingr.utils.WeakReferenceUtils.createWeakReference;
-
 public class LoadBillingRequest {
 
-    private WeakReference<LoadBillingListener> loadBillingListener;
+    private LoadBillingListener loadBillingListener;
     private boolean enablePendingPurchases;
     private QueryPurchasesRequest queryPurchasesRequest;
-    private WeakReference<PurchaseListener> purchaseListener;
+    private PurchaseListener purchaseListener;
 
     private LoadBillingRequest() {
     }
 
     @Nullable
     public LoadBillingListener getLoadBillingListener() {
-        return loadBillingListener.get();
+        return loadBillingListener;
     }
 
     public boolean isEnablePendingPurchases() {
@@ -38,7 +34,7 @@ public class LoadBillingRequest {
 
     @Nullable
     public PurchaseListener getPurchaseListener() {
-        return purchaseListener.get();
+        return purchaseListener;
     }
 
     public static class Builder {
@@ -68,10 +64,10 @@ public class LoadBillingRequest {
 
         public LoadBillingRequest build() {
             LoadBillingRequest loadBillingRequest = new LoadBillingRequest();
-            loadBillingRequest.loadBillingListener = createWeakReference(loadBillingListener);
+            loadBillingRequest.loadBillingListener = loadBillingListener;
             loadBillingRequest.enablePendingPurchases = enablePendingPurchases;
             loadBillingRequest.queryPurchasesRequest = queryPurchasesRequest;
-            loadBillingRequest.purchaseListener = createWeakReference(purchaseListener);
+            loadBillingRequest.purchaseListener = purchaseListener;
             return loadBillingRequest;
         }
     }

@@ -2,19 +2,16 @@ package com.abatra.billingr.sku;
 
 import androidx.annotation.Nullable;
 
-import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
-import static com.abatra.billingr.utils.WeakReferenceUtils.createWeakReference;
-
 public class QuerySkuRequest {
 
     private final Map<SkuType, Collection<String>> skuIdsByType = new HashMap<>();
-    private WeakReference<SkuListener> skuListener;
+    private SkuListener skuListener;
     private boolean queryFromCache;
 
     private QuerySkuRequest() {
@@ -26,7 +23,7 @@ public class QuerySkuRequest {
 
     @Nullable
     public SkuListener getSkuListener() {
-        return skuListener.get();
+        return skuListener;
     }
 
     public boolean queryFromCache() {
@@ -75,7 +72,7 @@ public class QuerySkuRequest {
         public QuerySkuRequest build() {
             QuerySkuRequest querySkuRequest = new QuerySkuRequest();
             querySkuRequest.skuIdsByType.putAll(skuIdsByType);
-            querySkuRequest.skuListener = createWeakReference(skuListener);
+            querySkuRequest.skuListener = skuListener;
             querySkuRequest.queryFromCache = queryFromCache;
             return querySkuRequest;
         }

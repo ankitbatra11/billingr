@@ -33,6 +33,7 @@ class GooglePurchasesUpdatedListener implements PurchasesUpdatedListener {
 
     @Override
     public void onPurchasesUpdated(@NonNull BillingResult billingResult, @Nullable List<Purchase> list) {
+
         GoogleBillingResult result = GoogleBillingResult.wrap(billingResult);
         Log.d(LOG_TAG, "queryPurchases result=" + result);
 
