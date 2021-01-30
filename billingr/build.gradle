@@ -15,7 +15,7 @@ android {
 
     defaultConfig {
 
-        minSdkVersion 14
+        minSdkVersion 16
         targetSdkVersion 30
 
         versionCode 1
@@ -39,6 +39,7 @@ dependencies {
     api group: 'androidx.lifecycle', name: 'lifecycle-runtime', version: '2.2.0'
     api group: 'com.parse.bolts', name: 'bolts-tasks', version: BOLTS_VERSION
     api 'com.google.code.gson:gson:2.8.6'
+    api group: 'com.github.ankitbatra11', name: 'wheelie', version: '3.0.4'
 
     implementation group: 'com.android.billingclient', name: 'billing', version: BILLING_CLIENT_VERSION
 

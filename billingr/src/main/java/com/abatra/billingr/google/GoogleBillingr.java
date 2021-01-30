@@ -2,7 +2,6 @@ package com.abatra.billingr.google;
 
 import android.app.Activity;
 import android.content.Context;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -31,14 +30,22 @@ import java.util.List;
 import java.util.Map;
 
 import bolts.Task;
+import timber.log.Timber;
 
 public class GoogleBillingr implements Billingr {
 
     private static final String LOG_TAG = "GoogleBillingClient";
 
     private final Context context;
+
+    @Nullable
     private BillingClient billingClient;
-    private GooglePurchasesUpdatedListener googlePurchasesUpdatedListener;
+
+    @Nullable
+    private GooglePurchasesUpdatedListener purchasesUpdatedListener;
+
+    @Nullable
+    private GoogleBillingClientStateListener clientStateListener;
 
     public GoogleBillingr(Context context) {
         this.context = context;
@@ -47,13 +54,14 @@ public class GoogleBillingr implements Billingr {
     @Override
     public void loadBilling(LoadBillingRequest loadBillingRequest) {
 
-        googlePurchasesUpdatedListener = new GooglePurchasesUpdatedListener(loadBillingRequest);
+        purchasesUpdatedListener = new GooglePurchasesUpdatedListener(loadBillingRequest);
 
         billingClient = createBillingClient(loadBillingRequest);
-        googlePurchasesUpdatedListener.setBillingClient(billingClient);
+        purchasesUpdatedListener.setBillingClient(billingClient);
 
         if (!billingClient.isReady()) {
-            billingClient.startConnection(new GoogleBillingClientStateListener(loadBillingRequest));
+            clientStateListener = new GoogleBillingClientStateListener(loadBillingRequest);
+            billingClient.startConnection(clientStateListener);
         }
     }
 
@@ -62,7 +70,7 @@ public class GoogleBillingr implements Billingr {
         if (loadBillingRequest.isEnablePendingPurchases()) {
             builder.enablePendingPurchases();
         }
-        builder.setListener(googlePurchasesUpdatedListener);
+        builder.setListener(purchasesUpdatedListener);
         return builder.build();
     }
 
@@ -82,16 +90,16 @@ public class GoogleBillingr implements Billingr {
     @Override
     public void queryPurchases(QueryPurchasesRequest queryPurchasesRequest) {
 
-        Log.v(LOG_TAG, "Querying purchases with request=" + queryPurchasesRequest);
+        Timber.tag(LOG_TAG).v("Querying purchases with request=%s", queryPurchasesRequest);
 
         String googleSkuType = GoogleBillingUtils.getSkuType(queryPurchasesRequest.getSkuType());
         Task.callInBackground(() -> billingClient.queryPurchases(googleSkuType)).continueWith(task -> {
             if (task.getError() != null) {
-                Log.e(LOG_TAG, "queryPurchases failed!", task.getError());
-                googlePurchasesUpdatedListener.onLoadingPurchasesFailed(new LoadingPurchasesFailedException(task.getError()));
+                Timber.e(task.getError(), "queryPurchases failed!");
+                purchasesUpdatedListener.onLoadingPurchasesFailed(new LoadingPurchasesFailedException(task.getError()));
             } else {
-                Log.v(LOG_TAG, "purchases result=" + task.getResult());
-                googlePurchasesUpdatedListener.onPurchasesResultReceived(task.getResult());
+                Timber.v("purchases result=%s", task.getResult());
+                purchasesUpdatedListener.onPurchasesResultReceived(task.getResult());
             }
             return null;
         });
@@ -109,7 +117,12 @@ public class GoogleBillingr implements Billingr {
     @Override
     public void destroy() {
 
-        googlePurchasesUpdatedListener = null;
+        purchasesUpdatedListener = null;
+
+        if (clientStateListener != null) {
+            clientStateListener.destroy();
+            clientStateListener = null;
+        }
 
         if (billingClient != null) {
             if (billingClient.isReady()) {
@@ -136,7 +149,7 @@ public class GoogleBillingr implements Billingr {
         public void onSkuDetailsResponse(@NonNull BillingResult billingResult, @Nullable List<SkuDetails> list) {
 
             GoogleBillingResult result = GoogleBillingResult.wrap(billingResult);
-            Log.d(LOG_TAG, "querySkuDetailsAsync result=" + result);
+            Timber.d("querySkuDetailsAsync result=%s", result);
 
             SkuListener skuListener = querySkuRequest.getSkuListener();
             if (skuListener != null) {
@@ -145,15 +158,15 @@ public class GoogleBillingr implements Billingr {
                     for (SkuDetails skuDetails : list == null ? Collections.<SkuDetails>emptyList() : list) {
                         skus.add(new GoogleSku(skuType, skuDetails));
                     }
-                    Log.d(LOG_TAG, "skusLoaded=" + skus);
+                    Timber.d("skusLoaded=%s", skus);
                     skuListener.onSkuLoaded(skus);
                 } else {
                     String message = billingResult.getDebugMessage();
                     skuListener.onLoadingSkusFailed(new LoadingSkuFailedException(message));
-                    Log.w(LOG_TAG, "loading skus failed");
+                    Timber.w("loading skus failed");
                 }
             } else {
-                Log.i(LOG_TAG, "skuListener is not present");
+                Timber.i("skuListener is not present");
             }
         }
     }
@@ -163,9 +176,10 @@ public class GoogleBillingr implements Billingr {
      */
     private class GoogleBillingClientStateListener implements BillingClientStateListener {
 
-        private final LoadBillingRequest loadBillingRequest;
+        @Nullable
+        private LoadBillingRequest loadBillingRequest;
 
-        private GoogleBillingClientStateListener(LoadBillingRequest loadBillingRequest) {
+        private GoogleBillingClientStateListener(@Nullable LoadBillingRequest loadBillingRequest) {
             this.loadBillingRequest = loadBillingRequest;
         }
 
@@ -173,14 +187,14 @@ public class GoogleBillingr implements Billingr {
         public void onBillingSetupFinished(@NonNull BillingResult billingResult) {
 
             GoogleBillingResult result = GoogleBillingResult.wrap(billingResult);
-            Log.d(LOG_TAG, "startConnection result=" + result);
+            Timber.d("startConnection result=%s", result);
 
-            if (loadBillingRequest.getLoadBillingListener() != null) {
+            if (loadBillingRequest != null && loadBillingRequest.getLoadBillingListener() != null) {
                 GoogleLoadBillingResult loadBillingResult = new GoogleLoadBillingResult(result);
                 loadBillingRequest.getLoadBillingListener().onLoadBillingResultReceived(loadBillingResult);
             }
             if (result.isOk()) {
-                if (loadBillingRequest.getQueryPurchasesRequest() != null) {
+                if (loadBillingRequest != null && loadBillingRequest.getQueryPurchasesRequest() != null) {
                     queryPurchases(loadBillingRequest.getQueryPurchasesRequest());
                 }
             }
@@ -188,7 +202,11 @@ public class GoogleBillingr implements Billingr {
 
         @Override
         public void onBillingServiceDisconnected() {
-            Log.d(LOG_TAG, "onBillingServiceDisconnected");
+            Timber.d("onBillingServiceDisconnected");
+        }
+
+        void destroy() {
+            loadBillingRequest = null;
         }
     }
 }
