@@ -2,7 +2,6 @@ package com.abatra.billingr.cache;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
-import android.util.Log;
 
 import com.abatra.billingr.Billingr;
 import com.abatra.billingr.exception.LoadingSkuFailedException;
@@ -20,10 +19,9 @@ import java.util.List;
 import java.util.Map;
 
 import bolts.Task;
+import timber.log.Timber;
 
 public class BillingrCache implements Billingr {
-
-    private static final String LOG_TAG = "BillingrCache";
 
     private final Billingr billingr;
     private final SharedPreferences sharedPreferences;
@@ -62,7 +60,7 @@ public class BillingrCache implements Billingr {
                 try {
                     tryCaching(sku);
                 } catch (Throwable t) {
-                    Log.e(LOG_TAG, "Failed to cache sku=" + sku, t);
+                    Timber.e(t, "Failed to cache sku=%s", sku);
                 }
             }
             return null;
@@ -84,7 +82,7 @@ public class BillingrCache implements Billingr {
                     try {
                         result.add(tryGettingSkuFromCache(entry.getKey(), id));
                     } catch (Throwable t) {
-                        Log.e(LOG_TAG, "Failed to get sku from cache!", t);
+                        Timber.e(t, "Failed to get sku from cache!");
                     }
                 }
             }
@@ -127,8 +125,8 @@ public class BillingrCache implements Billingr {
     }
 
     @Override
-    public void purchase(Activity activity, Sku sku) {
-        billingr.purchase(activity, sku);
+    public boolean launchPurchaseFlow(Activity activity, Sku sku) {
+        return billingr.launchPurchaseFlow(activity, sku);
     }
 
     @Override

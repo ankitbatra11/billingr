@@ -37,11 +37,7 @@ public class GoogleBillingr implements Billingr {
     private static final String LOG_TAG = "GoogleBillingClient";
 
     private final Context context;
-
-    @Nullable
     private BillingClient billingClient;
-
-    @Nullable
     private GooglePurchasesUpdatedListener purchasesUpdatedListener;
 
     @Nullable
@@ -56,7 +52,7 @@ public class GoogleBillingr implements Billingr {
 
         purchasesUpdatedListener = new GooglePurchasesUpdatedListener(loadBillingRequest);
 
-        billingClient = createBillingClient(loadBillingRequest);
+        billingClient = createBillingClient(loadBillingRequest, purchasesUpdatedListener);
         purchasesUpdatedListener.setBillingClient(billingClient);
 
         if (!billingClient.isReady()) {
@@ -65,7 +61,8 @@ public class GoogleBillingr implements Billingr {
         }
     }
 
-    private BillingClient createBillingClient(LoadBillingRequest loadBillingRequest) {
+    private BillingClient createBillingClient(LoadBillingRequest loadBillingRequest,
+                                              GooglePurchasesUpdatedListener purchasesUpdatedListener) {
         BillingClient.Builder builder = BillingClient.newBuilder(context);
         if (loadBillingRequest.isEnablePendingPurchases()) {
             builder.enablePendingPurchases();
@@ -105,13 +102,15 @@ public class GoogleBillingr implements Billingr {
         });
     }
 
-
     @Override
-    public void purchase(Activity activity, Sku sku) {
+    public boolean launchPurchaseFlow(Activity activity, Sku sku) {
+
         GoogleSku googleSku = (GoogleSku) sku;
-        billingClient.launchBillingFlow(activity, BillingFlowParams.newBuilder()
+        BillingResult billingResult = billingClient.launchBillingFlow(activity, BillingFlowParams.newBuilder()
                 .setSkuDetails(googleSku.getSkuDetails())
                 .build());
+
+        return GoogleBillingResult.wrap(billingResult).isOk();
     }
 
     @Override

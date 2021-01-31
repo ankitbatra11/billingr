@@ -38,7 +38,7 @@ public interface Billingr extends LifecycleObserver {
 
     void queryPurchases(QueryPurchasesRequest queryPurchasesRequest);
 
-    void purchase(Activity activity, Sku sku);
+    boolean launchPurchaseFlow(Activity activity, Sku sku);
 
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     void destroy();
