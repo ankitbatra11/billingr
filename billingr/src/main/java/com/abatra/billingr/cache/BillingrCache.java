@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 
 import com.abatra.android.wheelie.java8.Consumer;
 import com.abatra.billingr.Billingr;
+import com.abatra.billingr.PurchaseAcknowledger;
 import com.abatra.billingr.PurchaseListener;
 import com.abatra.billingr.SkuDetailsFetcher;
 import com.abatra.billingr.SkuPurchaser;
@@ -167,6 +168,11 @@ public class BillingrCache implements Billingr {
 
     @Override
     public void forEachObserver(Consumer<PurchaseListener> observerConsumer) {
+
+    }
+
+    @Override
+    public void acknowledgeInAppPurchases(PurchaseAcknowledger.Listener listener) {
 
     }
 

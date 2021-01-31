@@ -8,6 +8,7 @@ import androidx.annotation.Nullable;
 
 import com.abatra.android.wheelie.java8.Consumer;
 import com.abatra.billingr.Billingr;
+import com.abatra.billingr.PurchaseAcknowledger;
 import com.abatra.billingr.PurchaseFetcher;
 import com.abatra.billingr.PurchaseListener;
 import com.abatra.billingr.SkuDetailsFetcher;
@@ -45,6 +46,7 @@ public class GoogleBillingr implements Billingr {
     private final PurchaseFetcher purchaseFetcher;
     private final SkuDetailsFetcher skuDetailsFetcher;
     private final SkuPurchaser skuPurchaser;
+    private final PurchaseAcknowledger purchaseAcknowledger;
     private BillingClient billingClient;
     private GooglePurchasesUpdatedListener purchasesUpdatedListener;
 
@@ -54,11 +56,13 @@ public class GoogleBillingr implements Billingr {
     public GoogleBillingr(Context context,
                           PurchaseFetcher purchaseFetcher,
                           SkuDetailsFetcher skuDetailsFetcher,
-                          SkuPurchaser skuPurchaser) {
+                          SkuPurchaser skuPurchaser,
+                          PurchaseAcknowledger purchaseAcknowledger) {
         this.context = context;
         this.purchaseFetcher = purchaseFetcher;
         this.skuDetailsFetcher = skuDetailsFetcher;
         this.skuPurchaser = skuPurchaser;
+        this.purchaseAcknowledger = purchaseAcknowledger;
     }
 
     @Override
@@ -178,6 +182,11 @@ public class GoogleBillingr implements Billingr {
     @Override
     public void forEachObserver(Consumer<PurchaseListener> observerConsumer) {
         skuPurchaser.forEachObserver(observerConsumer);
+    }
+
+    @Override
+    public void acknowledgeInAppPurchases(PurchaseAcknowledger.Listener listener) {
+        purchaseAcknowledger.acknowledgeInAppPurchases(listener);
     }
 
     /**

@@ -6,7 +6,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.abatra.billingr.Billingr;
-import com.abatra.billingr.load.LoadBillingRequest;
+
+import timber.log.Timber;
 
 public class BillingDemoActivity extends AppCompatActivity {
 
@@ -14,7 +15,6 @@ public class BillingDemoActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Billingr billingr = Billingr.google(getApplicationContext());
-        getLifecycle().addObserver(billingr);
-        billingr.loadBilling(LoadBillingRequest.builder().build());
+        billingr.acknowledgeInAppPurchases(sku -> Timber.d("purchaseAcknowledged sku=%s", sku));
     }
 }
