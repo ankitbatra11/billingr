@@ -16,7 +16,7 @@ public class GoogleSku implements Sku {
         this.skuDetails = skuDetails;
     }
 
-    SkuDetails getSkuDetails() {
+    public SkuDetails getSkuDetails() {
         return skuDetails;
     }
 

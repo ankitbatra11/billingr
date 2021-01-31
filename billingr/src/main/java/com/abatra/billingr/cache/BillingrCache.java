@@ -3,7 +3,11 @@ package com.abatra.billingr.cache;
 import android.app.Activity;
 import android.content.SharedPreferences;
 
+import com.abatra.android.wheelie.java8.Consumer;
 import com.abatra.billingr.Billingr;
+import com.abatra.billingr.PurchaseListener;
+import com.abatra.billingr.SkuDetailsFetcher;
+import com.abatra.billingr.SkuPurchaser;
 import com.abatra.billingr.exception.LoadingSkuFailedException;
 import com.abatra.billingr.load.LoadBillingRequest;
 import com.abatra.billingr.purchase.QueryPurchasesRequest;
@@ -132,6 +136,38 @@ public class BillingrCache implements Billingr {
     @Override
     public void destroy() {
         billingr.destroy();
+    }
+
+    @Override
+    public void fetchInAppPurchases(PurchaseListener listener) {
+    }
+
+    @Override
+    public void fetchUnacknowledgedInAppPurchases(PurchaseListener listener) {
+    }
+
+    @Override
+    public void fetchInAppSkuDetails(SkuDetailsFetcher.Listener listener) {
+    }
+
+    @Override
+    public void launchPurchaseFlow(Sku sku, Activity activity, SkuPurchaser.Listener listener) {
+
+    }
+
+    @Override
+    public void addObserver(PurchaseListener observer) {
+
+    }
+
+    @Override
+    public void removeObserver(PurchaseListener observer) {
+
+    }
+
+    @Override
+    public void forEachObserver(Consumer<PurchaseListener> observerConsumer) {
+
     }
 
     private class CacheSkuListener implements SkuListener {

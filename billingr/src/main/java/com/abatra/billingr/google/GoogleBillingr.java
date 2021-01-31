@@ -6,7 +6,12 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.abatra.android.wheelie.java8.Consumer;
 import com.abatra.billingr.Billingr;
+import com.abatra.billingr.PurchaseFetcher;
+import com.abatra.billingr.PurchaseListener;
+import com.abatra.billingr.SkuDetailsFetcher;
+import com.abatra.billingr.SkuPurchaser;
 import com.abatra.billingr.exception.LoadingPurchasesFailedException;
 import com.abatra.billingr.exception.LoadingSkuFailedException;
 import com.abatra.billingr.load.LoadBillingRequest;
@@ -37,14 +42,23 @@ public class GoogleBillingr implements Billingr {
     private static final String LOG_TAG = "GoogleBillingClient";
 
     private final Context context;
+    private final PurchaseFetcher purchaseFetcher;
+    private final SkuDetailsFetcher skuDetailsFetcher;
+    private final SkuPurchaser skuPurchaser;
     private BillingClient billingClient;
     private GooglePurchasesUpdatedListener purchasesUpdatedListener;
 
     @Nullable
     private GoogleBillingClientStateListener clientStateListener;
 
-    public GoogleBillingr(Context context) {
+    public GoogleBillingr(Context context,
+                          PurchaseFetcher purchaseFetcher,
+                          SkuDetailsFetcher skuDetailsFetcher,
+                          SkuPurchaser skuPurchaser) {
         this.context = context;
+        this.purchaseFetcher = purchaseFetcher;
+        this.skuDetailsFetcher = skuDetailsFetcher;
+        this.skuPurchaser = skuPurchaser;
     }
 
     @Override
@@ -129,6 +143,41 @@ public class GoogleBillingr implements Billingr {
             }
             billingClient = null;
         }
+    }
+
+    @Override
+    public void fetchInAppPurchases(PurchaseListener listener) {
+        purchaseFetcher.fetchInAppPurchases(listener);
+    }
+
+    @Override
+    public void fetchUnacknowledgedInAppPurchases(PurchaseListener listener) {
+        purchaseFetcher.fetchUnacknowledgedInAppPurchases(listener);
+    }
+
+    @Override
+    public void fetchInAppSkuDetails(SkuDetailsFetcher.Listener listener) {
+        skuDetailsFetcher.fetchInAppSkuDetails(listener);
+    }
+
+    @Override
+    public void launchPurchaseFlow(Sku sku, Activity activity, SkuPurchaser.Listener listener) {
+        skuPurchaser.launchPurchaseFlow(sku, activity, listener);
+    }
+
+    @Override
+    public void addObserver(PurchaseListener observer) {
+        skuPurchaser.addObserver(observer);
+    }
+
+    @Override
+    public void removeObserver(PurchaseListener observer) {
+        skuPurchaser.removeObserver(observer);
+    }
+
+    @Override
+    public void forEachObserver(Consumer<PurchaseListener> observerConsumer) {
+        skuPurchaser.forEachObserver(observerConsumer);
     }
 
     /**
