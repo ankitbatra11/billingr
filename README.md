@@ -7,5 +7,5 @@ Library | Provider | Link
 ------- | -------- | ----
 Play Billing | Google | https://developer.android.com/google/play/billing
 
-# Jitpack URL
+# Jitpack Repo
 https://jitpack.io/#ankitbatra11/billingr
