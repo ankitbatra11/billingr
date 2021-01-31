@@ -24,4 +24,13 @@ public final class BillingUtils {
     public static boolean isPurchased(Purchase purchase) {
         return purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED;
     }
+
+    public static boolean isError(BillingResult billingResult) {
+        switch (billingResult.getResponseCode()) {
+            case BillingClient.BillingResponseCode.ERROR:
+            case BillingClient.BillingResponseCode.DEVELOPER_ERROR:
+                return true;
+        }
+        return false;
+    }
 }
