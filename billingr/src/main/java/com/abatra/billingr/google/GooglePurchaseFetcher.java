@@ -4,13 +4,12 @@ import com.abatra.billingr.PurchaseFetcher;
 import com.abatra.billingr.PurchaseListener;
 import com.abatra.billingr.SkuPurchase;
 import com.abatra.billingr.util.BillingUtils;
+import com.android.billingclient.api.AcknowledgePurchaseParams;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.Purchase;
-import com.google.common.base.Predicate;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import timber.log.Timber;
 
@@ -24,18 +23,22 @@ public class GooglePurchaseFetcher implements PurchaseFetcher {
 
     @Override
     public void fetchInAppPurchases(PurchaseListener listener) {
-        fetchInAppPurchases(listener, BillingUtils::isPurchased);
-    }
-
-    private void fetchInAppPurchases(PurchaseListener listener, Predicate<Purchase> purchasePredicate) {
         billingClientSupplier.getInitializedBillingClient(billingClient -> {
             Purchase.PurchasesResult purchasesResult = billingClient.queryPurchases(BillingClient.SkuType.INAPP);
             if (BillingUtils.isOk(purchasesResult.getBillingResult())) {
                 List<SkuPurchase> skuPurchases = new ArrayList<>();
                 if (purchasesResult.getPurchasesList() != null) {
                     for (Purchase purchase : purchasesResult.getPurchasesList()) {
-                        if (purchasePredicate.apply(purchase)) {
-                            skuPurchases.add(new GoogleSkuPurchase(purchase));
+                        if (purchase.isAcknowledged()) {
+                            if (BillingUtils.isPurchased(purchase)) {
+                                skuPurchases.add(new GoogleSkuPurchase(purchase));
+                            }
+                        } else {
+                            try {
+                                tryAcknowledgingPurchase(billingClient, purchase);
+                            } catch (Exception e) {
+                                Timber.e(e, "tryAcknowledgingPurchase failed for sku=%s", purchase.getSku());
+                            }
                         }
                     }
                 }
@@ -44,8 +47,17 @@ public class GooglePurchaseFetcher implements PurchaseFetcher {
         });
     }
 
-    @Override
-    public void fetchUnacknowledgedInAppPurchases(PurchaseListener listener) {
-        fetchInAppPurchases(listener, purchase -> !Objects.requireNonNull(purchase).isAcknowledged());
+    private void tryAcknowledgingPurchase(BillingClient billingClient, Purchase purchase) {
+
+        AcknowledgePurchaseParams acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
+                .setPurchaseToken(purchase.getPurchaseToken())
+                .build();
+
+        billingClient.acknowledgePurchase(acknowledgePurchaseParams, result -> {
+            if (!BillingUtils.isOk(result)) {
+                Timber.w("unexpected billing result=%s from acknowledgePurchase for sku=%s",
+                        BillingUtils.toString(result), purchase.getSku());
+            }
+        });
     }
 }

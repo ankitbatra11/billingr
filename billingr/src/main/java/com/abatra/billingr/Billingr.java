@@ -10,7 +10,6 @@ import androidx.lifecycle.OnLifecycleEvent;
 
 import com.abatra.billingr.cache.BillingrCache;
 import com.abatra.billingr.google.GoogleBillingr;
-import com.abatra.billingr.google.GooglePurchaseAcknowledger;
 import com.abatra.billingr.google.GooglePurchaseFetcher;
 import com.abatra.billingr.google.GoogleSkuDetailsFetcher;
 import com.abatra.billingr.google.GoogleSkuPurchaser;
@@ -21,16 +20,14 @@ import com.abatra.billingr.purchase.QueryPurchasesRequest;
 import com.abatra.billingr.sku.QuerySkuRequest;
 import com.abatra.billingr.sku.Sku;
 
-public interface Billingr extends LifecycleObserver, PurchaseAcknowledger, SkuDetailsFetcher, PurchaseFetcher,
-        SkuPurchaser {
+public interface Billingr extends LifecycleObserver, SkuDetailsFetcher, PurchaseFetcher, SkuPurchaser {
 
     static Billingr google(Context context) {
         InitializedBillingClientSupplier billingClientSupplier = InitializedBillingClientSupplier.newInstance(context);
         GooglePurchaseFetcher purchaseFetcher = new GooglePurchaseFetcher(billingClientSupplier);
         GoogleSkuDetailsFetcher skuDetailsFetcher = new GoogleSkuDetailsFetcher(billingClientSupplier);
         GoogleSkuPurchaser skuPurchaser = new GoogleSkuPurchaser(billingClientSupplier);
-        GooglePurchaseAcknowledger purchaseAcknowledger = new GooglePurchaseAcknowledger(purchaseFetcher, billingClientSupplier);
-        return new GoogleBillingr(context, purchaseFetcher, skuDetailsFetcher, skuPurchaser, purchaseAcknowledger);
+        return new GoogleBillingr(context, purchaseFetcher, skuDetailsFetcher, skuPurchaser);
     }
 
     static Billingr cachedGoogle(Context context) {
