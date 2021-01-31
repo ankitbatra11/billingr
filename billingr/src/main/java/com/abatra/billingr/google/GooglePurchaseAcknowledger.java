@@ -22,6 +22,7 @@ public class GooglePurchaseAcknowledger implements PurchaseAcknowledger {
     @Override
     public void acknowledgeInAppPurchases(Listener listener) {
         purchaseFetcher.fetchUnacknowledgedInAppPurchases(skuPurchases -> {
+            Timber.d("UnacknowledgedInAppPurchases=%s", skuPurchases);
             for (SkuPurchase skuPurchase : skuPurchases) {
                 try {
                     tryAcknowledgingPurchase(skuPurchase, listener);

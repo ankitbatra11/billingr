@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import timber.log.Timber;
+
 public class GooglePurchaseFetcher implements PurchaseFetcher {
 
     private final InitializedBillingClientSupplier billingClientSupplier;
