@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface SkuDetailsFetcher {
 
-    void fetchInAppSkuDetails(Listener listener);
+    void fetchInAppSkuDetails(List<String> skus, Listener listener);
 
     interface Listener {
         void loaded(List<Sku> skus);

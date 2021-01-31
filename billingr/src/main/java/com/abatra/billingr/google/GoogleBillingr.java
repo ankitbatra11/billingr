@@ -151,8 +151,8 @@ public class GoogleBillingr implements Billingr {
     }
 
     @Override
-    public void fetchInAppSkuDetails(SkuDetailsFetcher.Listener listener) {
-        skuDetailsFetcher.fetchInAppSkuDetails(listener);
+    public void fetchInAppSkuDetails(List<String> skus, SkuDetailsFetcher.Listener listener) {
+        skuDetailsFetcher.fetchInAppSkuDetails(skus, listener);
     }
 
     @Override

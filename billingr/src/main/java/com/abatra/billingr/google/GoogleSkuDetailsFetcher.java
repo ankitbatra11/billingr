@@ -22,23 +22,24 @@ public class GoogleSkuDetailsFetcher implements SkuDetailsFetcher {
     }
 
     @Override
-    public void fetchInAppSkuDetails(Listener listener) {
+    public void fetchInAppSkuDetails(List<String> skus, Listener listener) {
 
         billingClientSupplier.getInitializedBillingClient(billingClient -> {
 
             SkuDetailsParams skuDetailsParams = SkuDetailsParams.newBuilder()
                     .setType(BillingClient.SkuType.INAPP)
+                    .setSkusList(skus)
                     .build();
 
             billingClient.querySkuDetailsAsync(skuDetailsParams, (billingResult, list) -> {
                 if (BillingUtils.isOk(billingResult)) {
-                    List<Sku> skus = new ArrayList<>();
+                    List<Sku> loadedSkus = new ArrayList<>();
                     if (list != null) {
                         for (SkuDetails skuDetails : list) {
-                            skus.add(new GoogleSku(SkuType.IN_APP_PRODUCT, skuDetails));
+                            loadedSkus.add(new GoogleSku(SkuType.IN_APP_PRODUCT, skuDetails));
                         }
                     }
-                    listener.loaded(skus);
+                    listener.loaded(loadedSkus);
                 } else {
                     Timber.w("unexpected billing result=%s from querySkuDetailsAsync for in app sku type",
                             BillingUtils.toString(billingResult));

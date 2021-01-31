@@ -143,7 +143,8 @@ public class BillingrCache implements Billingr {
     }
 
     @Override
-    public void fetchInAppSkuDetails(SkuDetailsFetcher.Listener listener) {
+    public void fetchInAppSkuDetails(List<String> skus, SkuDetailsFetcher.Listener listener) {
+
     }
 
     @Override
