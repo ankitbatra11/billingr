@@ -27,24 +27,17 @@ import timber.log.Timber;
 public class InitializedBillingClientSupplier implements Observable<PurchaseListener>, PurchasesUpdatedListener,
         ILifecycleObserver {
 
-    private BillingClient billingClient;
+    private final Context context;
     private final AtomicBoolean retriedInitializing = new AtomicBoolean(false);
     private final AtomicBoolean connecting = new AtomicBoolean(false);
     private final Observable<Listener> listeners = Observable.copyOnWriteArraySet();
     private final Observable<PurchaseListener> purchaseListeners = Observable.hashSet();
 
-    private InitializedBillingClientSupplier() {
-    }
+    @Nullable
+    private BillingClient billingClient;
 
-    public static InitializedBillingClientSupplier newInstance(Context context) {
-
-        InitializedBillingClientSupplier supplier = new InitializedBillingClientSupplier();
-        supplier.billingClient = BillingClient.newBuilder(context)
-                .enablePendingPurchases()
-                .setListener(supplier)
-                .build();
-
-        return supplier;
+    public InitializedBillingClientSupplier(Context context) {
+        this.context = context;
     }
 
     @Override
@@ -87,18 +80,34 @@ public class InitializedBillingClientSupplier implements Observable<PurchaseList
 
         listeners.addObserver(listener);
 
-        if (billingClient.isReady()) {
-            listener.initialized(billingClient);
+        if (billingClient == null) {
+            buildClientAndStartConnection();
         } else {
-            if (!connecting.get()) {
-                startConnection();
+            if (billingClient.isReady()) {
+                listener.initialized(billingClient);
             } else {
-                Timber.d("Already connecting to google play!");
+                if (!connecting.get()) {
+                    buildClientAndStartConnection();
+                } else {
+                    Timber.d("Already connecting to google play!");
+                }
             }
         }
     }
 
+    private void buildClientAndStartConnection() {
+
+        billingClient = BillingClient.newBuilder(context)
+                .enablePendingPurchases()
+                .setListener(this)
+                .build();
+
+        startConnection();
+    }
+
     private void startConnection() {
+
+        assert billingClient != null;
 
         retriedInitializing.set(false);
         connecting.set(true);
@@ -145,6 +154,7 @@ public class InitializedBillingClientSupplier implements Observable<PurchaseList
 
         if (billingClient != null) {
             billingClient.endConnection();
+            billingClient = null;
         }
     }
 
