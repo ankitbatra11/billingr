@@ -167,6 +167,11 @@ public class BillingrCache implements Billingr {
 
     }
 
+    @Override
+    public void removeObservers() {
+
+    }
+
     private class CacheSkuListener implements SkuListener {
 
         private final QuerySkuRequest querySkuRequest;

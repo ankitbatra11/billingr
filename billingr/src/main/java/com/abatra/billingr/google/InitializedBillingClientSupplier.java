@@ -6,9 +6,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.abatra.android.wheelie.java8.Consumer;
+import com.abatra.android.wheelie.lifecycle.ILifecycleObserver;
 import com.abatra.android.wheelie.pattern.Observable;
 import com.abatra.billingr.PurchaseListener;
 import com.abatra.billingr.SkuPurchase;
+import com.abatra.billingr.exception.BillingrException;
 import com.abatra.billingr.util.BillingUtils;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClientStateListener;
@@ -22,7 +24,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import timber.log.Timber;
 
-public class InitializedBillingClientSupplier implements Observable<PurchaseListener>, PurchasesUpdatedListener {
+public class InitializedBillingClientSupplier implements Observable<PurchaseListener>, PurchasesUpdatedListener,
+        ILifecycleObserver {
 
     private BillingClient billingClient;
     private final AtomicBoolean retriedInitializing = new AtomicBoolean(false);
@@ -60,6 +63,12 @@ public class InitializedBillingClientSupplier implements Observable<PurchaseList
     }
 
     @Override
+    public void removeObservers() {
+        listeners.removeObservers();
+        purchaseListeners.removeObservers();
+    }
+
+    @Override
     public void onPurchasesUpdated(@NonNull BillingResult billingResult, @Nullable List<Purchase> list) {
         if (BillingUtils.isOk(billingResult)) {
             List<SkuPurchase> skuPurchases = new ArrayList<>();
@@ -94,7 +103,6 @@ public class InitializedBillingClientSupplier implements Observable<PurchaseList
         retriedInitializing.set(false);
         connecting.set(true);
 
-        assert billingClient != null;
         billingClient.startConnection(new BillingClientStateListener() {
 
             @Override
@@ -105,7 +113,10 @@ public class InitializedBillingClientSupplier implements Observable<PurchaseList
                 if (BillingUtils.isOk(billingResult)) {
                     listeners.forEachObserver(listener -> listener.initialized(billingClient));
                 } else {
-                    Timber.w("unexpected billingResult=%s from onBillingSetupFinished", BillingUtils.toString(billingResult));
+                    Timber.w("unexpected billingResult=%s from onBillingSetupFinished",
+                            BillingUtils.toString(billingResult));
+
+                    initializationFailed(BillingUtils.toString(billingResult));
                 }
             }
 
@@ -116,12 +127,33 @@ public class InitializedBillingClientSupplier implements Observable<PurchaseList
 
                 if (!retriedInitializing.getAndSet(true)) {
                     startConnection();
+                } else {
+                    initializationFailed("Connection retry exhausted!");
                 }
             }
         });
     }
 
+    private void initializationFailed(String message) {
+        listeners.forEachObserver(listener -> listener.initializationFailed(new BillingrException(message)));
+    }
+
+    @Override
+    public void onDestroy() {
+
+        removeObservers();
+
+        if (billingClient != null) {
+            billingClient.endConnection();
+        }
+    }
+
     public interface Listener {
-        void initialized(BillingClient billingClient);
+
+        default void initialized(BillingClient billingClient) {
+        }
+
+        default void initializationFailed(BillingrException billingrException) {
+        }
     }
 }

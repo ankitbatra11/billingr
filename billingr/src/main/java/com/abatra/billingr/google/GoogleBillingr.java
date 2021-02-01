@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.abatra.android.wheelie.java8.Consumer;
+import com.abatra.android.wheelie.lifecycle.ILifecycleOwner;
 import com.abatra.billingr.Billingr;
 import com.abatra.billingr.PurchaseFetcher;
 import com.abatra.billingr.PurchaseListener;
@@ -42,6 +43,7 @@ public class GoogleBillingr implements Billingr {
     private static final String LOG_TAG = "GoogleBillingClient";
 
     private final Context context;
+    private final InitializedBillingClientSupplier billingClientSupplier;
     private final PurchaseFetcher purchaseFetcher;
     private final SkuDetailsFetcher skuDetailsFetcher;
     private final SkuPurchaser skuPurchaser;
@@ -52,13 +54,20 @@ public class GoogleBillingr implements Billingr {
     private GoogleBillingClientStateListener clientStateListener;
 
     public GoogleBillingr(Context context,
+                          InitializedBillingClientSupplier billingClientSupplier,
                           PurchaseFetcher purchaseFetcher,
                           SkuDetailsFetcher skuDetailsFetcher,
                           SkuPurchaser skuPurchaser) {
         this.context = context;
+        this.billingClientSupplier = billingClientSupplier;
         this.purchaseFetcher = purchaseFetcher;
         this.skuDetailsFetcher = skuDetailsFetcher;
         this.skuPurchaser = skuPurchaser;
+    }
+
+    @Override
+    public void observeLifecycle(ILifecycleOwner lifecycleOwner) {
+        billingClientSupplier.observeLifecycle(lifecycleOwner);
     }
 
     @Override
@@ -156,11 +165,6 @@ public class GoogleBillingr implements Billingr {
     }
 
     @Override
-    public void launchPurchaseFlow(Sku sku, Activity activity, SkuPurchaser.Listener listener) {
-        skuPurchaser.launchPurchaseFlow(sku, activity, listener);
-    }
-
-    @Override
     public void addObserver(PurchaseListener observer) {
         skuPurchaser.addObserver(observer);
     }
@@ -173,6 +177,16 @@ public class GoogleBillingr implements Billingr {
     @Override
     public void forEachObserver(Consumer<PurchaseListener> observerConsumer) {
         skuPurchaser.forEachObserver(observerConsumer);
+    }
+
+    @Override
+    public void removeObservers() {
+        skuPurchaser.removeObservers();
+    }
+
+    @Override
+    public void launchPurchaseFlow(Sku sku, Activity activity, SkuPurchaser.Listener listener) {
+        skuPurchaser.launchPurchaseFlow(sku, activity, listener);
     }
 
     /**

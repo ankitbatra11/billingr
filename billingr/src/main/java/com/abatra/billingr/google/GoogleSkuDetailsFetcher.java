@@ -1,6 +1,7 @@
 package com.abatra.billingr.google;
 
 import com.abatra.billingr.SkuDetailsFetcher;
+import com.abatra.billingr.exception.BillingrException;
 import com.abatra.billingr.sku.Sku;
 import com.abatra.billingr.sku.SkuType;
 import com.abatra.billingr.util.BillingUtils;
@@ -24,27 +25,39 @@ public class GoogleSkuDetailsFetcher implements SkuDetailsFetcher {
     @Override
     public void fetchInAppSkuDetails(List<String> skus, Listener listener) {
 
-        billingClientSupplier.getInitializedBillingClient(billingClient -> {
+        billingClientSupplier.getInitializedBillingClient(new InitializedBillingClientSupplier.Listener() {
+            @Override
+            public void initialized(BillingClient billingClient) {
 
-            SkuDetailsParams skuDetailsParams = SkuDetailsParams.newBuilder()
-                    .setType(BillingClient.SkuType.INAPP)
-                    .setSkusList(skus)
-                    .build();
+                SkuDetailsParams skuDetailsParams = SkuDetailsParams.newBuilder()
+                        .setType(BillingClient.SkuType.INAPP)
+                        .setSkusList(skus)
+                        .build();
 
-            billingClient.querySkuDetailsAsync(skuDetailsParams, (billingResult, list) -> {
-                if (BillingUtils.isOk(billingResult)) {
-                    List<Sku> loadedSkus = new ArrayList<>();
-                    if (list != null) {
-                        for (SkuDetails skuDetails : list) {
-                            loadedSkus.add(new GoogleSku(SkuType.IN_APP_PRODUCT, skuDetails));
+                billingClient.querySkuDetailsAsync(skuDetailsParams, (billingResult, list) -> {
+
+                    if (BillingUtils.isOk(billingResult)) {
+                        List<Sku> loadedSkus = new ArrayList<>();
+                        if (list != null) {
+                            for (SkuDetails skuDetails : list) {
+                                loadedSkus.add(new GoogleSku(SkuType.IN_APP_PRODUCT, skuDetails));
+                            }
                         }
+                        listener.skusLoaded(loadedSkus);
+                    } else {
+
+                        Timber.w("unexpected billing result=%s from querySkuDetailsAsync for in app sku type",
+                                BillingUtils.toString(billingResult));
+
+                        listener.loadingSkuDetailsFailed(BillingrException.from(billingResult));
                     }
-                    listener.loaded(loadedSkus);
-                } else {
-                    Timber.w("unexpected billing result=%s from querySkuDetailsAsync for in app sku type",
-                            BillingUtils.toString(billingResult));
-                }
-            });
+                });
+            }
+
+            @Override
+            public void initializationFailed(BillingrException billingrException) {
+                listener.loadingSkuDetailsFailed(billingrException);
+            }
         });
 
     }

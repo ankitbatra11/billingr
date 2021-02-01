@@ -9,4 +9,6 @@ public class GoogleLaunchPurchaseFlowResult implements LaunchPurchaseFlowResult 
     public GoogleLaunchPurchaseFlowResult(BillingResult billingResult) {
         this.billingResult = billingResult;
     }
+
+
 }

@@ -3,12 +3,16 @@ package com.abatra.billingr.google;
 import android.app.Activity;
 
 import com.abatra.android.wheelie.java8.Consumer;
-import com.abatra.billingr.GoogleLaunchPurchaseFlowResult;
 import com.abatra.billingr.PurchaseListener;
 import com.abatra.billingr.SkuPurchaser;
+import com.abatra.billingr.exception.BillingrException;
 import com.abatra.billingr.sku.Sku;
+import com.abatra.billingr.util.BillingUtils;
+import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingFlowParams;
 import com.android.billingclient.api.BillingResult;
+
+import timber.log.Timber;
 
 public class GoogleSkuPurchaser implements SkuPurchaser {
 
@@ -34,15 +38,35 @@ public class GoogleSkuPurchaser implements SkuPurchaser {
     }
 
     @Override
+    public void removeObservers() {
+        billingClientSupplier.removeObservers();
+    }
+
+    @Override
     public void launchPurchaseFlow(Sku sku, Activity activity, Listener listener) {
-        billingClientSupplier.getInitializedBillingClient(billingClient -> {
 
-            GoogleSku googleSku = (GoogleSku) sku;
-            BillingResult billingResult = billingClient.launchBillingFlow(activity, BillingFlowParams.newBuilder()
-                    .setSkuDetails(googleSku.getSkuDetails())
-                    .build());
+        billingClientSupplier.getInitializedBillingClient(new InitializedBillingClientSupplier.Listener() {
 
-            listener.loaded(new GoogleLaunchPurchaseFlowResult(billingResult));
+            @Override
+            public void initialized(BillingClient billingClient) {
+
+                GoogleSku googleSku = (GoogleSku) sku;
+                BillingResult billingResult = billingClient.launchBillingFlow(activity, BillingFlowParams.newBuilder()
+                        .setSkuDetails(googleSku.getSkuDetails())
+                        .build());
+
+                if (BillingUtils.isOk(billingResult)) {
+                    listener.purchaseFlowLaunchedSuccessfully();
+                } else {
+                    Timber.w("Unexpected billing result=%s from launchBillingFlow", BillingUtils.toString(billingResult));
+                    listener.purchaseFlowLaunchFailed(BillingrException.from(billingResult));
+                }
+            }
+
+            @Override
+            public void initializationFailed(BillingrException billingrException) {
+                listener.purchaseFlowLaunchFailed(billingrException);
+            }
         });
     }
 }

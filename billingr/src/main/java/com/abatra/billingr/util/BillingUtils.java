@@ -5,6 +5,8 @@ import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.Purchase;
 import com.google.common.base.MoreObjects;
 
+import timber.log.Timber;
+
 public final class BillingUtils {
 
     private BillingUtils() {
