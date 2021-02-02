@@ -72,7 +72,7 @@ public class InitializedBillingClientSupplier implements Observable<PurchaseList
             }
             forEachObserver(purchaseListener -> purchaseListener.updated(skuPurchases));
         } else {
-            Timber.w("Unexpected billingResult=%s for onPurchasesUpdated", billingResult);
+            Timber.w("Unexpected billingResult=%s for onPurchasesUpdated", BillingUtils.toString(billingResult));
         }
     }
 
