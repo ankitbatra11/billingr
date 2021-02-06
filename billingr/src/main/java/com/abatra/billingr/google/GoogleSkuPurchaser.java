@@ -5,9 +5,8 @@ import android.app.Activity;
 import com.abatra.android.wheelie.java8.Consumer;
 import com.abatra.billingr.PurchaseListener;
 import com.abatra.billingr.SkuPurchaser;
-import com.abatra.billingr.exception.BillingrException;
-import com.abatra.billingr.sku.Sku;
-import com.abatra.billingr.util.BillingUtils;
+import com.abatra.billingr.BillingrException;
+import com.abatra.billingr.Sku;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingFlowParams;
 import com.android.billingclient.api.BillingResult;
@@ -55,11 +54,11 @@ public class GoogleSkuPurchaser implements SkuPurchaser {
                         .setSkuDetails(googleSku.getSkuDetails())
                         .build());
 
-                if (BillingUtils.isOk(billingResult)) {
+                if (GoogleBillingUtils.isOk(billingResult)) {
                     listener.purchaseFlowLaunchedSuccessfully();
                 } else {
-                    Timber.w("Unexpected billing result=%s from launchBillingFlow", BillingUtils.toString(billingResult));
-                    listener.purchaseFlowLaunchFailed(BillingrException.from(billingResult));
+                    Timber.w("Unexpected billing result=%s from launchBillingFlow", GoogleBillingUtils.toString(billingResult));
+                    listener.purchaseFlowLaunchFailed(GoogleBillingrException.from(billingResult));
                 }
             }
 

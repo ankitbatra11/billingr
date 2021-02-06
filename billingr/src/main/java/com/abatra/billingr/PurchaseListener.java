@@ -1,7 +1,5 @@
 package com.abatra.billingr;
 
-import com.abatra.billingr.exception.BillingrException;
-
 import java.util.List;
 
 public interface PurchaseListener {

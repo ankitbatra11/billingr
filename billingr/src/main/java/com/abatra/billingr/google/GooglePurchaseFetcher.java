@@ -3,8 +3,7 @@ package com.abatra.billingr.google;
 import com.abatra.billingr.PurchaseFetcher;
 import com.abatra.billingr.PurchaseListener;
 import com.abatra.billingr.SkuPurchase;
-import com.abatra.billingr.exception.BillingrException;
-import com.abatra.billingr.util.BillingUtils;
+import com.abatra.billingr.BillingrException;
 import com.android.billingclient.api.AcknowledgePurchaseParams;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.Purchase;
@@ -29,7 +28,7 @@ public class GooglePurchaseFetcher implements PurchaseFetcher {
             @Override
             public void initialized(BillingClient billingClient) {
                 Purchase.PurchasesResult purchasesResult = billingClient.queryPurchases(BillingClient.SkuType.INAPP);
-                if (BillingUtils.isOk(purchasesResult.getBillingResult())) {
+                if (GoogleBillingUtils.isOk(purchasesResult.getBillingResult())) {
                     List<SkuPurchase> skuPurchases = new ArrayList<>();
                     if (purchasesResult.getPurchasesList() != null) {
                         for (Purchase purchase : purchasesResult.getPurchasesList()) {
@@ -40,7 +39,7 @@ public class GooglePurchaseFetcher implements PurchaseFetcher {
                                     Timber.e(e, "tryAcknowledgingPurchase failed for sku=%s", purchase.getSku());
                                 }
                             }
-                            if (BillingUtils.isPurchased(purchase)) {
+                            if (GoogleBillingUtils.isPurchased(purchase)) {
                                 skuPurchases.add(new GoogleSkuPurchase(purchase));
                             }
                         }
@@ -49,9 +48,9 @@ public class GooglePurchaseFetcher implements PurchaseFetcher {
                 } else {
 
                     Timber.w("unexpected billing result=%s from inApp query purchases",
-                            BillingUtils.toString(purchasesResult.getBillingResult()));
+                            GoogleBillingUtils.toString(purchasesResult.getBillingResult()));
 
-                    listener.loadingPurchasesFailed(BillingrException.from(purchasesResult.getBillingResult()));
+                    listener.loadingPurchasesFailed(GoogleBillingrException.from(purchasesResult.getBillingResult()));
                 }
             }
 
@@ -69,9 +68,9 @@ public class GooglePurchaseFetcher implements PurchaseFetcher {
                 .build();
 
         billingClient.acknowledgePurchase(acknowledgePurchaseParams, result -> {
-            if (!BillingUtils.isOk(result)) {
+            if (!GoogleBillingUtils.isOk(result)) {
                 Timber.w("unexpected billing result=%s from acknowledgePurchase for sku=%s",
-                        BillingUtils.toString(result), purchase.getSku());
+                        GoogleBillingUtils.toString(result), purchase.getSku());
             }
         });
     }

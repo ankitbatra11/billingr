@@ -10,8 +10,7 @@ import com.abatra.android.wheelie.lifecycle.ILifecycleObserver;
 import com.abatra.android.wheelie.pattern.Observable;
 import com.abatra.billingr.PurchaseListener;
 import com.abatra.billingr.SkuPurchase;
-import com.abatra.billingr.exception.BillingrException;
-import com.abatra.billingr.util.BillingUtils;
+import com.abatra.billingr.BillingrException;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingResult;
@@ -63,7 +62,7 @@ public class InitializedBillingClientSupplier implements Observable<PurchaseList
 
     @Override
     public void onPurchasesUpdated(@NonNull BillingResult billingResult, @Nullable List<Purchase> list) {
-        if (BillingUtils.isOk(billingResult)) {
+        if (GoogleBillingUtils.isOk(billingResult)) {
             List<SkuPurchase> skuPurchases = new ArrayList<>();
             if (list != null) {
                 for (Purchase purchase : list) {
@@ -72,7 +71,7 @@ public class InitializedBillingClientSupplier implements Observable<PurchaseList
             }
             forEachObserver(purchaseListener -> purchaseListener.updated(skuPurchases));
         } else {
-            Timber.w("Unexpected billingResult=%s for onPurchasesUpdated", BillingUtils.toString(billingResult));
+            Timber.w("Unexpected billingResult=%s for onPurchasesUpdated", GoogleBillingUtils.toString(billingResult));
         }
     }
 
@@ -119,13 +118,13 @@ public class InitializedBillingClientSupplier implements Observable<PurchaseList
 
                 connecting.set(false);
 
-                if (BillingUtils.isOk(billingResult)) {
+                if (GoogleBillingUtils.isOk(billingResult)) {
                     listeners.forEachObserver(listener -> listener.initialized(billingClient));
                 } else {
                     Timber.w("unexpected billingResult=%s from onBillingSetupFinished",
-                            BillingUtils.toString(billingResult));
+                            GoogleBillingUtils.toString(billingResult));
 
-                    initializationFailed(BillingUtils.toString(billingResult));
+                    initializationFailed(GoogleBillingUtils.toString(billingResult));
                 }
             }
 
@@ -144,7 +143,7 @@ public class InitializedBillingClientSupplier implements Observable<PurchaseList
     }
 
     private void initializationFailed(String message) {
-        listeners.forEachObserver(listener -> listener.initializationFailed(new BillingrException(message)));
+        listeners.forEachObserver(listener -> listener.initializationFailed(new GoogleBillingrException(message)));
     }
 
     @Override

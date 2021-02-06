@@ -1,10 +1,9 @@
 package com.abatra.billingr.google;
 
 import com.abatra.billingr.SkuDetailsFetcher;
-import com.abatra.billingr.exception.BillingrException;
-import com.abatra.billingr.sku.Sku;
-import com.abatra.billingr.sku.SkuType;
-import com.abatra.billingr.util.BillingUtils;
+import com.abatra.billingr.BillingrException;
+import com.abatra.billingr.Sku;
+import com.abatra.billingr.SkuType;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.SkuDetails;
 import com.android.billingclient.api.SkuDetailsParams;
@@ -36,7 +35,7 @@ public class GoogleSkuDetailsFetcher implements SkuDetailsFetcher {
 
                 billingClient.querySkuDetailsAsync(skuDetailsParams, (billingResult, list) -> {
 
-                    if (BillingUtils.isOk(billingResult)) {
+                    if (GoogleBillingUtils.isOk(billingResult)) {
                         List<Sku> loadedSkus = new ArrayList<>();
                         if (list != null) {
                             for (SkuDetails skuDetails : list) {
@@ -47,9 +46,9 @@ public class GoogleSkuDetailsFetcher implements SkuDetailsFetcher {
                     } else {
 
                         Timber.w("unexpected billing result=%s from querySkuDetailsAsync for in app sku type",
-                                BillingUtils.toString(billingResult));
+                                GoogleBillingUtils.toString(billingResult));
 
-                        listener.loadingSkuDetailsFailed(BillingrException.from(billingResult));
+                        listener.loadingSkuDetailsFailed(GoogleBillingrException.from(billingResult));
                     }
                 });
             }

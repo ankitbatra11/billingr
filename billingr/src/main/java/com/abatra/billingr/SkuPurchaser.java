@@ -3,8 +3,6 @@ package com.abatra.billingr;
 import android.app.Activity;
 
 import com.abatra.android.wheelie.pattern.Observable;
-import com.abatra.billingr.exception.BillingrException;
-import com.abatra.billingr.sku.Sku;
 
 public interface SkuPurchaser extends Observable<PurchaseListener> {
 
