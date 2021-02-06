@@ -1,10 +1,11 @@
 package com.abatra.billingr.google;
 
-import android.util.Log;
-
-import com.abatra.billingr.purchase.Purchase;
-import com.abatra.billingr.sku.SkuType;
+import com.abatra.billingr.SkuType;
 import com.android.billingclient.api.BillingClient;
+import com.android.billingclient.api.BillingResult;
+import com.google.common.base.MoreObjects;
+
+import timber.log.Timber;
 
 public class GoogleBillingUtils {
 
@@ -23,10 +24,6 @@ public class GoogleBillingUtils {
         throw new IllegalArgumentException("Invalid skuType=" + skuType);
     }
 
-    public static Purchase toPurchase(com.android.billingclient.api.Purchase purchase) {
-        return new Purchase(purchase.getSku(), purchase.getOrderId());
-    }
-
     /**
      * @param inAppProductName Premium (SCAR)
      * @return Premium
@@ -38,9 +35,33 @@ public class GoogleBillingUtils {
             try {
                 result = inAppProductName.substring(0, indexOf).trim();
             } catch (Throwable e) {
-                Log.e(LOG_TAG, "Removing appName failed for sku=" + inAppProductName, e);
+                Timber.e(e, "Removing appName failed for sku=%s", inAppProductName);
             }
         }
         return result;
+    }
+
+    public static boolean isOk(BillingResult billingResult) {
+        return billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK;
+    }
+
+    public static String toString(BillingResult billingResult) {
+        return MoreObjects.toStringHelper(billingResult)
+                .add("responseCode", billingResult.getResponseCode())
+                .add("debugMessage", billingResult.getDebugMessage())
+                .toString();
+    }
+
+    public static boolean isPurchased(com.android.billingclient.api.Purchase purchase) {
+        return purchase.getPurchaseState() == com.android.billingclient.api.Purchase.PurchaseState.PURCHASED;
+    }
+
+    public static boolean isError(BillingResult billingResult) {
+        switch (billingResult.getResponseCode()) {
+            case BillingClient.BillingResponseCode.ERROR:
+            case BillingClient.BillingResponseCode.DEVELOPER_ERROR:
+                return true;
+        }
+        return false;
     }
 }
