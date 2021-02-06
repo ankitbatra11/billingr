@@ -9,6 +9,10 @@ public class GoogleBillingrException extends BillingrException {
         super(message);
     }
 
+    public GoogleBillingrException(Throwable cause) {
+        super(cause);
+    }
+
     public static GoogleBillingrException from(BillingResult billingResult) {
         return new GoogleBillingrException(GoogleBillingUtils.toString(billingResult));
     }
