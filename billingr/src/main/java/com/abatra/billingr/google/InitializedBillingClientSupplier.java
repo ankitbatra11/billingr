@@ -95,6 +95,15 @@ public class InitializedBillingClientSupplier implements Observable<PurchaseList
     }
 
     private void buildClientAndStartConnection() {
+        try {
+            tryBuildingClientAndStartConnection();
+        } catch (Throwable error) {
+            GoogleBillingrException billingrException = new GoogleBillingrException(error);
+            listeners.forEachObserver(listener -> listener.initializationFailed(billingrException));
+        }
+    }
+
+    private void tryBuildingClientAndStartConnection() {
 
         billingClient = BillingClient.newBuilder(context)
                 .enablePendingPurchases()
