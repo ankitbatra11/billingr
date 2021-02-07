@@ -86,7 +86,7 @@ public class InitializedBillingClientSupplier implements Observable<PurchaseList
                 listener.initialized(billingClient);
             } else {
                 if (!connecting.get()) {
-                    buildClientAndStartConnection();
+                    reconnect();
                 } else {
                     Timber.d("Already connecting to google play!");
                 }
@@ -94,16 +94,28 @@ public class InitializedBillingClientSupplier implements Observable<PurchaseList
         }
     }
 
-    private void buildClientAndStartConnection() {
+    private void reconnect() {
         try {
-            tryBuildingClientAndStartConnection();
+            tryReconnecting();
         } catch (Throwable error) {
             GoogleBillingrException billingrException = new GoogleBillingrException(error);
-            listeners.forEachObserver(listener -> listener.initializationFailed(billingrException));
+            listeners.forEachObserver(type -> type.initializationFailed(billingrException));
         }
     }
 
-    private void tryBuildingClientAndStartConnection() {
+    private void tryReconnecting() {
+        endConnection();
+        buildClientAndStartConnection();
+    }
+
+    private void endConnection() {
+        if (billingClient != null) {
+            billingClient.endConnection();
+            billingClient = null;
+        }
+    }
+
+    private void buildClientAndStartConnection() {
 
         billingClient = BillingClient.newBuilder(context)
                 .enablePendingPurchases()
@@ -157,13 +169,8 @@ public class InitializedBillingClientSupplier implements Observable<PurchaseList
 
     @Override
     public void onDestroy() {
-
         removeObservers();
-
-        if (billingClient != null) {
-            billingClient.endConnection();
-            billingClient = null;
-        }
+        endConnection();
     }
 
     public interface Listener {
