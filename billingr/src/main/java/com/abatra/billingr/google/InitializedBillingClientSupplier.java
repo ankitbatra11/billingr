@@ -17,6 +17,8 @@ import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.PurchasesUpdatedListener;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import timber.log.Timber;
 
 public class InitializedBillingClientSupplier implements Observable<PurchaseListener>, PurchasesUpdatedListener,
-        ILifecycleObserver {
+        ILifecycleObserver, BillingClientStateListener {
 
     private final Context context;
     private final AtomicBoolean retriedInitializing = new AtomicBoolean(false);
@@ -135,7 +137,8 @@ public class InitializedBillingClientSupplier implements Observable<PurchaseList
         billingClient.startConnection(new ConnectionListener(new WeakReference<>(this)));
     }
 
-    private void onBillingSetupFinished(BillingResult billingResult) {
+    @Override
+    public void onBillingSetupFinished(@NotNull BillingResult billingResult) {
 
         connecting.set(false);
 
@@ -149,7 +152,8 @@ public class InitializedBillingClientSupplier implements Observable<PurchaseList
         }
     }
 
-    private void onBillingServiceDisconnected() {
+    @Override
+    public void onBillingServiceDisconnected() {
 
         connecting.set(false);
 
