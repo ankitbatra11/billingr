@@ -8,15 +8,18 @@ import androidx.annotation.Nullable;
 import com.abatra.android.wheelie.java8.Consumer;
 import com.abatra.android.wheelie.lifecycle.ILifecycleObserver;
 import com.abatra.android.wheelie.pattern.Observable;
+import com.abatra.billingr.BillingrException;
 import com.abatra.billingr.PurchaseListener;
 import com.abatra.billingr.SkuPurchase;
-import com.abatra.billingr.BillingrException;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.PurchasesUpdatedListener;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -24,13 +27,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import timber.log.Timber;
 
 public class InitializedBillingClientSupplier implements Observable<PurchaseListener>, PurchasesUpdatedListener,
-        ILifecycleObserver {
+        ILifecycleObserver, BillingClientStateListener {
 
     private final Context context;
     private final AtomicBoolean retriedInitializing = new AtomicBoolean(false);
     private final AtomicBoolean connecting = new AtomicBoolean(false);
     private final Observable<Listener> listeners = Observable.copyOnWriteArraySet();
-    private final Observable<PurchaseListener> purchaseListeners = Observable.hashSet();
+    private final Observable<com.abatra.billingr.PurchaseListener> purchaseListeners = Observable.hashSet();
 
     @Nullable
     private BillingClient billingClient;
@@ -40,17 +43,17 @@ public class InitializedBillingClientSupplier implements Observable<PurchaseList
     }
 
     @Override
-    public void addObserver(PurchaseListener observer) {
+    public void addObserver(com.abatra.billingr.PurchaseListener observer) {
         purchaseListeners.addObserver(observer);
     }
 
     @Override
-    public void removeObserver(PurchaseListener observer) {
+    public void removeObserver(com.abatra.billingr.PurchaseListener observer) {
         purchaseListeners.addObserver(observer);
     }
 
     @Override
-    public void forEachObserver(Consumer<PurchaseListener> observerConsumer) {
+    public void forEachObserver(Consumer<com.abatra.billingr.PurchaseListener> observerConsumer) {
         purchaseListeners.forEachObserver(observerConsumer);
     }
 
@@ -119,7 +122,7 @@ public class InitializedBillingClientSupplier implements Observable<PurchaseList
 
         billingClient = BillingClient.newBuilder(context)
                 .enablePendingPurchases()
-                .setListener(this)
+                .setListener(new PurchaseListener(new WeakReference<>(this)))
                 .build();
 
         startConnection();
@@ -127,40 +130,38 @@ public class InitializedBillingClientSupplier implements Observable<PurchaseList
 
     private void startConnection() {
 
-        assert billingClient != null;
-
         retriedInitializing.set(false);
         connecting.set(true);
 
-        billingClient.startConnection(new BillingClientStateListener() {
+        assert billingClient != null;
+        billingClient.startConnection(new ConnectionListener(new WeakReference<>(this)));
+    }
 
-            @Override
-            public void onBillingSetupFinished(@NonNull BillingResult billingResult) {
+    @Override
+    public void onBillingSetupFinished(@NotNull BillingResult billingResult) {
 
-                connecting.set(false);
+        connecting.set(false);
 
-                if (GoogleBillingUtils.isOk(billingResult)) {
-                    listeners.forEachObserver(listener -> listener.initialized(billingClient));
-                } else {
-                    Timber.w("unexpected billingResult=%s from onBillingSetupFinished",
-                            GoogleBillingUtils.toString(billingResult));
+        if (GoogleBillingUtils.isOk(billingResult)) {
+            listeners.forEachObserver(listener -> listener.initialized(billingClient));
+        } else {
+            Timber.w("unexpected billingResult=%s from onBillingSetupFinished",
+                    GoogleBillingUtils.toString(billingResult));
 
-                    initializationFailed(GoogleBillingUtils.toString(billingResult));
-                }
-            }
+            initializationFailed(GoogleBillingUtils.toString(billingResult));
+        }
+    }
 
-            @Override
-            public void onBillingServiceDisconnected() {
+    @Override
+    public void onBillingServiceDisconnected() {
 
-                connecting.set(false);
+        connecting.set(false);
 
-                if (!retriedInitializing.getAndSet(true)) {
-                    startConnection();
-                } else {
-                    initializationFailed("Connection retry exhausted!");
-                }
-            }
-        });
+        if (!retriedInitializing.getAndSet(true)) {
+            startConnection();
+        } else {
+            initializationFailed("Connection retry exhausted!");
+        }
     }
 
     private void initializationFailed(String message) {
@@ -171,6 +172,45 @@ public class InitializedBillingClientSupplier implements Observable<PurchaseList
     public void onDestroy() {
         removeObservers();
         endConnection();
+    }
+
+    private static class ConnectionListener implements BillingClientStateListener {
+
+        private final WeakReference<InitializedBillingClientSupplier> reference;
+
+        private ConnectionListener(WeakReference<InitializedBillingClientSupplier> reference) {
+            this.reference = reference;
+        }
+
+        @Override
+        public void onBillingSetupFinished(@NonNull BillingResult billingResult) {
+            if (reference.get() != null) {
+                reference.get().onBillingSetupFinished(billingResult);
+            }
+        }
+
+        @Override
+        public void onBillingServiceDisconnected() {
+            if (reference.get() != null) {
+                reference.get().onBillingServiceDisconnected();
+            }
+        }
+    }
+
+    private static class PurchaseListener implements PurchasesUpdatedListener {
+
+        private final WeakReference<InitializedBillingClientSupplier> reference;
+
+        private PurchaseListener(WeakReference<InitializedBillingClientSupplier> reference) {
+            this.reference = reference;
+        }
+
+        @Override
+        public void onPurchasesUpdated(@NonNull BillingResult billingResult, @Nullable List<Purchase> list) {
+            if (reference.get() != null) {
+                reference.get().onPurchasesUpdated(billingResult, list);
+            }
+        }
     }
 
     public interface Listener {
