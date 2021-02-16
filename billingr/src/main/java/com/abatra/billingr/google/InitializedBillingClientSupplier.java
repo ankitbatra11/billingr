@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import timber.log.Timber;
@@ -101,15 +102,19 @@ public class InitializedBillingClientSupplier implements LifecycleObserverObserv
         connecting.set(false);
 
         if (GoogleBillingUtils.isOk(billingResult)) {
-            listener.initialized(billingClient);
+            getListener().ifPresent(l -> l.initialized(billingClient));
         } else if (GoogleBillingUtils.isUnavailable(billingResult)) {
-            listener.onBillingUnavailable();
+            getListener().ifPresent(BillingAvailabilityCallback::onBillingUnavailable);
         } else {
             Timber.w("unexpected billingResult=%s from onBillingSetupFinished",
                     GoogleBillingUtils.toString(billingResult));
 
             initializationFailed(GoogleBillingUtils.toString(billingResult));
         }
+    }
+
+    private Optional<Listener> getListener() {
+        return Optional.ofNullable(listener);
     }
 
     private void onBillingServiceDisconnected() {
@@ -124,7 +129,10 @@ public class InitializedBillingClientSupplier implements LifecycleObserverObserv
     }
 
     private void initializationFailed(String message) {
-        listener.initializationFailed(new GoogleBillingrException(message));
+        getListener().ifPresent(l -> {
+            GoogleBillingrException billingrException = new GoogleBillingrException(message);
+            l.initializationFailed(billingrException);
+        });
     }
 
     private void onPurchasesUpdated(@NonNull BillingResult billingResult, @Nullable List<Purchase> list) {
@@ -157,16 +165,16 @@ public class InitializedBillingClientSupplier implements LifecycleObserverObserv
 
         @Override
         public void onBillingSetupFinished(@NonNull BillingResult billingResult) {
-            if (reference.get() != null) {
-                reference.get().onBillingSetupFinished(billingResult);
-            }
+            getInitializedBillingClientSupplier().ifPresent(s -> s.onBillingSetupFinished(billingResult));
+        }
+
+        private Optional<InitializedBillingClientSupplier> getInitializedBillingClientSupplier() {
+            return Optional.ofNullable(reference.get());
         }
 
         @Override
         public void onBillingServiceDisconnected() {
-            if (reference.get() != null) {
-                reference.get().onBillingServiceDisconnected();
-            }
+            getInitializedBillingClientSupplier().ifPresent(InitializedBillingClientSupplier::onBillingServiceDisconnected);
         }
     }
 
@@ -180,9 +188,11 @@ public class InitializedBillingClientSupplier implements LifecycleObserverObserv
 
         @Override
         public void onPurchasesUpdated(@NonNull BillingResult billingResult, @Nullable List<Purchase> list) {
-            if (reference.get() != null) {
-                reference.get().onPurchasesUpdated(billingResult, list);
-            }
+            getInitializedBillingClientSupplier().ifPresent(s -> s.onPurchasesUpdated(billingResult, list));
+        }
+
+        private Optional<InitializedBillingClientSupplier> getInitializedBillingClientSupplier() {
+            return Optional.ofNullable(reference.get());
         }
     }
 
