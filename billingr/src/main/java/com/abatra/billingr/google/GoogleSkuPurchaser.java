@@ -66,6 +66,11 @@ public class GoogleSkuPurchaser implements SkuPurchaser {
             public void initializationFailed(BillingrException billingrException) {
                 listener.purchaseFlowLaunchFailed(billingrException);
             }
+
+            @Override
+            public void onBillingUnavailable() {
+                listener.onBillingUnavailable();
+            }
         });
     }
 }

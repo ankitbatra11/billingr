@@ -8,7 +8,7 @@ public interface SkuPurchaser extends Observable<PurchaseListener> {
 
     void launchPurchaseFlow(Sku sku, Activity activity, Listener listener);
 
-    interface Listener {
+    interface Listener extends BillingAvailabilityCallback {
 
         default void purchaseFlowLaunchedSuccessfully() {
         }

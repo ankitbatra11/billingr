@@ -57,6 +57,11 @@ public class GoogleSkuDetailsFetcher implements SkuDetailsFetcher {
             public void initializationFailed(BillingrException billingrException) {
                 listener.loadingSkuDetailsFailed(billingrException);
             }
+
+            @Override
+            public void onBillingUnavailable() {
+                listener.onBillingUnavailable();
+            }
         });
 
     }
