@@ -6,7 +6,7 @@ public interface SkuDetailsFetcher {
 
     void fetchInAppSkuDetails(List<String> skus, Listener listener);
 
-    interface Listener {
+    interface Listener extends BillingAvailabilityCallback {
 
         default void skusLoaded(List<Sku> skus) {
         }

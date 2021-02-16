@@ -1,13 +1,12 @@
 package com.abatra.billingr.google;
 
-import android.content.Context;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.abatra.android.wheelie.java8.Consumer;
-import com.abatra.android.wheelie.lifecycle.ILifecycleObserver;
+import com.abatra.android.wheelie.lifecycle.LifecycleObserverObservable;
 import com.abatra.android.wheelie.pattern.Observable;
+import com.abatra.billingr.BillingAvailabilityCallback;
 import com.abatra.billingr.BillingrException;
 import com.abatra.billingr.PurchaseListener;
 import com.abatra.billingr.SkuPurchase;
@@ -26,20 +25,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import timber.log.Timber;
 
-public class InitializedBillingClientSupplier implements Observable<PurchaseListener>, PurchasesUpdatedListener,
-        ILifecycleObserver, BillingClientStateListener {
+public class InitializedBillingClientSupplier implements LifecycleObserverObservable<PurchaseListener> {
 
-    private final Context context;
+    private final BillingClientFactory billingClientFactory;
+
     private final AtomicBoolean retriedInitializing = new AtomicBoolean(false);
     private final AtomicBoolean connecting = new AtomicBoolean(false);
-    private final Observable<Listener> listeners = Observable.copyOnWriteArraySet();
+
+    @Nullable
+    private Listener listener;
     private final Observable<com.abatra.billingr.PurchaseListener> purchaseListeners = Observable.hashSet();
 
     @Nullable
     private BillingClient billingClient;
 
-    public InitializedBillingClientSupplier(Context context) {
-        this.context = context;
+    public InitializedBillingClientSupplier(BillingClientFactory billingClientFactory) {
+        this.billingClientFactory = billingClientFactory;
     }
 
     @Override
@@ -59,12 +60,74 @@ public class InitializedBillingClientSupplier implements Observable<PurchaseList
 
     @Override
     public void removeObservers() {
-        listeners.removeObservers();
+        listener = null;
         purchaseListeners.removeObservers();
     }
 
-    @Override
-    public void onPurchasesUpdated(@NonNull BillingResult billingResult, @Nullable List<Purchase> list) {
+    public void getInitializedBillingClient(Listener listener) {
+        this.listener = listener;
+        if (!connecting.get()) {
+            retriedInitializing.set(false);
+            endConnectionBuildClientStartConnection();
+        } else {
+            Timber.d("Already connecting to google play!");
+        }
+    }
+
+    private void endConnectionBuildClientStartConnection() {
+
+        endConnection();
+
+        PurchaseListener purchasesUpdatedListener = new PurchaseListener(new WeakReference<>(this));
+        billingClient = billingClientFactory.createPendingPurchasesEnabledBillingClient(purchasesUpdatedListener);
+
+        startConnection();
+    }
+
+    private void endConnection() {
+        if (billingClient != null) {
+            billingClient.endConnection();
+            billingClient = null;
+        }
+    }
+
+    private void startConnection() {
+        connecting.set(true);
+        billingClient.startConnection(new ConnectionListener(new WeakReference<>(this)));
+    }
+
+    private void onBillingSetupFinished(@NotNull BillingResult billingResult) {
+
+        connecting.set(false);
+
+        if (GoogleBillingUtils.isOk(billingResult)) {
+            listener.initialized(billingClient);
+        } else if (GoogleBillingUtils.isUnavailable(billingResult)) {
+            listener.onBillingUnavailable();
+        } else {
+            Timber.w("unexpected billingResult=%s from onBillingSetupFinished",
+                    GoogleBillingUtils.toString(billingResult));
+
+            initializationFailed(GoogleBillingUtils.toString(billingResult));
+        }
+    }
+
+    private void onBillingServiceDisconnected() {
+
+        connecting.set(false);
+
+        if (!retriedInitializing.getAndSet(true)) {
+            endConnectionBuildClientStartConnection();
+        } else {
+            initializationFailed("Connection retry exhausted!");
+        }
+    }
+
+    private void initializationFailed(String message) {
+        listener.initializationFailed(new GoogleBillingrException(message));
+    }
+
+    private void onPurchasesUpdated(@NonNull BillingResult billingResult, @Nullable List<Purchase> list) {
         if (GoogleBillingUtils.isOk(billingResult)) {
             List<SkuPurchase> skuPurchases = new ArrayList<>();
             if (list != null) {
@@ -76,96 +139,6 @@ public class InitializedBillingClientSupplier implements Observable<PurchaseList
         } else {
             Timber.w("Unexpected billingResult=%s for onPurchasesUpdated", GoogleBillingUtils.toString(billingResult));
         }
-    }
-
-    public void getInitializedBillingClient(Listener listener) {
-
-        listeners.addObserver(listener);
-
-        if (billingClient == null) {
-            buildClientAndStartConnection();
-        } else {
-            if (billingClient.isReady()) {
-                listener.initialized(billingClient);
-            } else {
-                if (!connecting.get()) {
-                    reconnect();
-                } else {
-                    Timber.d("Already connecting to google play!");
-                }
-            }
-        }
-    }
-
-    private void reconnect() {
-        try {
-            tryReconnecting();
-        } catch (Throwable error) {
-            GoogleBillingrException billingrException = new GoogleBillingrException(error);
-            listeners.forEachObserver(type -> type.initializationFailed(billingrException));
-        }
-    }
-
-    private void tryReconnecting() {
-        endConnection();
-        buildClientAndStartConnection();
-    }
-
-    private void endConnection() {
-        if (billingClient != null) {
-            billingClient.endConnection();
-            billingClient = null;
-        }
-    }
-
-    private void buildClientAndStartConnection() {
-
-        billingClient = BillingClient.newBuilder(context)
-                .enablePendingPurchases()
-                .setListener(new PurchaseListener(new WeakReference<>(this)))
-                .build();
-
-        startConnection();
-    }
-
-    private void startConnection() {
-
-        retriedInitializing.set(false);
-        connecting.set(true);
-
-        assert billingClient != null;
-        billingClient.startConnection(new ConnectionListener(new WeakReference<>(this)));
-    }
-
-    @Override
-    public void onBillingSetupFinished(@NotNull BillingResult billingResult) {
-
-        connecting.set(false);
-
-        if (GoogleBillingUtils.isOk(billingResult)) {
-            listeners.forEachObserver(listener -> listener.initialized(billingClient));
-        } else {
-            Timber.w("unexpected billingResult=%s from onBillingSetupFinished",
-                    GoogleBillingUtils.toString(billingResult));
-
-            initializationFailed(GoogleBillingUtils.toString(billingResult));
-        }
-    }
-
-    @Override
-    public void onBillingServiceDisconnected() {
-
-        connecting.set(false);
-
-        if (!retriedInitializing.getAndSet(true)) {
-            startConnection();
-        } else {
-            initializationFailed("Connection retry exhausted!");
-        }
-    }
-
-    private void initializationFailed(String message) {
-        listeners.forEachObserver(listener -> listener.initializationFailed(new GoogleBillingrException(message)));
     }
 
     @Override
@@ -213,7 +186,7 @@ public class InitializedBillingClientSupplier implements Observable<PurchaseList
         }
     }
 
-    public interface Listener {
+    public interface Listener extends BillingAvailabilityCallback {
 
         default void initialized(BillingClient billingClient) {
         }

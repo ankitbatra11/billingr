@@ -58,6 +58,11 @@ public class GooglePurchaseFetcher implements PurchaseFetcher {
             public void initializationFailed(BillingrException billingrException) {
                 listener.loadingPurchasesFailed(billingrException);
             }
+
+            @Override
+            public void onBillingUnavailable() {
+                listener.onBillingUnavailable();
+            }
         });
     }
 

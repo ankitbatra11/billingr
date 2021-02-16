@@ -9,8 +9,6 @@ import timber.log.Timber;
 
 public class GoogleBillingUtils {
 
-    private static final String LOG_TAG = "GoogleBillingUtils";
-
     private GoogleBillingUtils() {
     }
 
@@ -63,5 +61,9 @@ public class GoogleBillingUtils {
                 return true;
         }
         return false;
+    }
+
+    public static boolean isUnavailable(BillingResult billingResult) {
+        return billingResult.getResponseCode() == BillingClient.BillingResponseCode.BILLING_UNAVAILABLE;
     }
 }
