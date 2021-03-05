@@ -11,6 +11,8 @@ import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingFlowParams;
 import com.android.billingclient.api.BillingResult;
 
+import java.util.Locale;
+
 import timber.log.Timber;
 
 public class GoogleSkuPurchaser implements SkuPurchaser {
@@ -57,18 +59,29 @@ public class GoogleSkuPurchaser implements SkuPurchaser {
                 if (GoogleBillingUtils.isOk(billingResult)) {
                     listener.purchaseFlowLaunchedSuccessfully();
                 } else {
-                    Timber.w("Unexpected billing result=%s from launchBillingFlow", GoogleBillingUtils.toString(billingResult));
+
+                    String message = String.format(Locale.ENGLISH,
+                            "Unexpected billing result=%s from launchBillingFlow",
+                            GoogleBillingUtils.toString(billingResult));
+
+                    if (GoogleBillingUtils.isError(billingResult)) {
+                        Timber.e(new RuntimeException(message));
+                    } else {
+                        Timber.w(message);
+                    }
                     listener.purchaseFlowLaunchFailed(GoogleBillingrException.from(billingResult));
                 }
             }
 
             @Override
             public void initializationFailed(BillingrException billingrException) {
+                Timber.e(billingrException);
                 listener.purchaseFlowLaunchFailed(billingrException);
             }
 
             @Override
             public void onBillingUnavailable() {
+                Timber.w("onBillingUnavailable");
                 listener.onBillingUnavailable();
             }
         });

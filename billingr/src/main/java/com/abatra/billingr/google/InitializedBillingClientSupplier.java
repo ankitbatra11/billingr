@@ -93,7 +93,10 @@ public class InitializedBillingClientSupplier implements LifecycleObserverObserv
     }
 
     private void startConnection() {
+
         connecting.set(true);
+
+        assert billingClient != null;
         billingClient.startConnection(new ConnectionListener(new WeakReference<>(this)));
     }
 
