@@ -4,6 +4,12 @@ import android.app.Activity;
 
 import androidx.annotation.Nullable;
 
+import com.abatra.android.wheelie.chronicle.Chronicle;
+import com.abatra.android.wheelie.chronicle.firebase.FirebaseBeginCheckoutEventParams;
+import com.abatra.android.wheelie.chronicle.firebase.FirebasePrice;
+import com.abatra.android.wheelie.chronicle.firebase.FirebasePurchasableItem;
+import com.abatra.android.wheelie.chronicle.firebase.FirebasePurchaseEventParams;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -24,7 +30,30 @@ public class AnalyticsSkuPurchaser implements SkuPurchaser, PurchaseListener {
     }
 
     private void logPurchaseEvent(Sku sku, List<SkuPurchase> skuPurchases) {
-        // TODO bring chronicle to wheelie
+        skuPurchases.stream()
+                .filter(skuPurchase -> skuPurchase.getSku().equalsIgnoreCase(sku.getId()))
+                .findFirst()
+                .ifPresent(skuPurchase -> {
+                    Chronicle.recordPurchaseEvent(new FirebasePurchaseEventParams()
+                            .setAffiliation(sku.getAffiliation())
+                            .setFirebasePrice(createPrice(sku))
+                            .setTransactionId(skuPurchase.getPurchaseToken())
+                            .addPurchasedItem(createPurchasableItem(sku))
+                    );
+                });
+    }
+
+    private FirebasePrice createPrice(Sku sku) {
+        return new FirebasePrice(sku.getPriceAmount(), sku.getCurrency());
+    }
+
+    private FirebasePurchasableItem createPurchasableItem(Sku sku) {
+        return new FirebasePurchasableItem()
+                .setId(sku.getId())
+                .setName(sku.getTitle())
+                .setCategory(sku.getType().asPurchasableItemCategory())
+                .setPrice(sku.getPriceAmount())
+                .setQuantity(1);
     }
 
     @Override
@@ -61,6 +90,8 @@ public class AnalyticsSkuPurchaser implements SkuPurchaser, PurchaseListener {
     }
 
     private void logBeginCheckoutEvent(Sku checkedOutSku) {
-        // TODO: bring chronicle to wheelie
+        Chronicle.recordBeginCheckoutEvent(new FirebaseBeginCheckoutEventParams()
+                .setFirebasePrice(createPrice(checkedOutSku))
+                .addCheckedOutItem(createPurchasableItem(checkedOutSku)));
     }
 }

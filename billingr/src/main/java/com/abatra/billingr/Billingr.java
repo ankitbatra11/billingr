@@ -14,7 +14,7 @@ import com.abatra.billingr.google.InitializedBillingClientSupplier;
 
 public interface Billingr extends LifecycleObserver, SkuDetailsFetcher, PurchaseFetcher, SkuPurchaser, ILifecycleObserver {
 
-    static Billingr google(Context context) {
+    static Billingr playStore(Context context) {
         BillingClientFactory billingClientFactory = new BillingClientFactory(context);
         InitializedBillingClientSupplier billingClientSupplier = new InitializedBillingClientSupplier(billingClientFactory);
         GooglePurchaseFetcher purchaseFetcher = new GooglePurchaseFetcher(billingClientSupplier);
