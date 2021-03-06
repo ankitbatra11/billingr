@@ -41,8 +41,8 @@ public class GoogleSku implements Sku {
     }
 
     @Override
-    public long getPriceAmount() {
-        return Double.valueOf(getPriceAmountMicros() / Math.pow(10, 6)).longValue();
+    public double getPriceAmount() {
+        return getPriceAmountMicros() / Math.pow(10, 6);
     }
 
     @Override
