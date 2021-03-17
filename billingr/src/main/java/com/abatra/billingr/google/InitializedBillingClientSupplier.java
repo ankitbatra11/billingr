@@ -30,15 +30,15 @@ public class InitializedBillingClientSupplier implements LifecycleObserverObserv
 
     private final BillingClientFactory billingClientFactory;
 
-    private final AtomicBoolean retriedInitializing = new AtomicBoolean(false);
-    private final AtomicBoolean connecting = new AtomicBoolean(false);
+    final AtomicBoolean retriedInitializing = new AtomicBoolean(false);
+    final AtomicBoolean connecting = new AtomicBoolean(false);
 
     @Nullable
     private Listener listener;
     private final Observable<com.abatra.billingr.PurchaseListener> purchaseListeners = Observable.hashSet();
 
     @Nullable
-    private BillingClient billingClient;
+    BillingClient billingClient;
 
     public InitializedBillingClientSupplier(BillingClientFactory billingClientFactory) {
         this.billingClientFactory = billingClientFactory;
@@ -142,13 +142,19 @@ public class InitializedBillingClientSupplier implements LifecycleObserverObserv
 
     private void onPurchasesUpdated(@NonNull BillingResult billingResult, @Nullable List<Purchase> list) {
         if (GoogleBillingUtils.isOk(billingResult)) {
-            List<SkuPurchase> skuPurchases = new ArrayList<>();
             if (list != null) {
+                List<SkuPurchase> skuPurchases = new ArrayList<>();
                 for (Purchase purchase : list) {
                     skuPurchases.add(new GoogleSkuPurchase(purchase));
                 }
+                if (skuPurchases.isEmpty()) {
+                    Timber.i("purchase list is empty");
+                } else {
+                    forEachObserver(purchaseListener -> purchaseListener.updated(skuPurchases));
+                }
+            } else {
+                Timber.w("billing result is OK purchase list is null");
             }
-            forEachObserver(purchaseListener -> purchaseListener.updated(skuPurchases));
         } else {
             Timber.w("Unexpected billingResult=%s for onPurchasesUpdated", GoogleBillingUtils.toString(billingResult));
         }
