@@ -69,20 +69,29 @@ public class InitializedBillingClientSupplier implements LifecycleObserverObserv
         this.listener = listener;
         if (!connecting.get()) {
             retriedInitializing.set(false);
-            endConnectionBuildClientStartConnection();
+            endConnectionBuildClientStartConnectionOrThrow();
         } else {
             Timber.d("Already connecting to google play!");
         }
     }
 
-    private void endConnectionBuildClientStartConnection() {
+    private void endConnectionBuildClientStartConnectionOrThrow() {
+        connecting.set(true);
+        try {
+            tryEndingConnectionBuildingClientStartingConnection();
+        } catch (Throwable error) {
+            connecting.set(false);
+            initializationFailed(new GoogleBillingrException(error));
+        }
+    }
+
+    private void tryEndingConnectionBuildingClientStartingConnection() {
 
         endConnection();
 
         PurchaseListener purchasesUpdatedListener = new PurchaseListener(new WeakReference<>(this));
         billingClient = billingClientFactory.createPendingPurchasesEnabledBillingClient(purchasesUpdatedListener);
-
-        startConnection();
+        billingClient.startConnection(new ConnectionListener(new WeakReference<>(this)));
     }
 
     private void endConnection() {
@@ -90,14 +99,6 @@ public class InitializedBillingClientSupplier implements LifecycleObserverObserv
             billingClient.endConnection();
             billingClient = null;
         }
-    }
-
-    private void startConnection() {
-
-        connecting.set(true);
-
-        assert billingClient != null;
-        billingClient.startConnection(new ConnectionListener(new WeakReference<>(this)));
     }
 
     private void onBillingSetupFinished(@NotNull BillingResult billingResult) {
@@ -125,17 +126,18 @@ public class InitializedBillingClientSupplier implements LifecycleObserverObserv
         connecting.set(false);
 
         if (!retriedInitializing.getAndSet(true)) {
-            endConnectionBuildClientStartConnection();
+            endConnectionBuildClientStartConnectionOrThrow();
         } else {
             initializationFailed("Connection retry exhausted!");
         }
     }
 
     private void initializationFailed(String message) {
-        getListener().ifPresent(l -> {
-            GoogleBillingrException billingrException = new GoogleBillingrException(message);
-            l.initializationFailed(billingrException);
-        });
+        initializationFailed(new GoogleBillingrException(message));
+    }
+
+    private void initializationFailed(BillingrException billingrException) {
+        getListener().ifPresent(l -> l.initializationFailed(billingrException));
     }
 
     private void onPurchasesUpdated(@NonNull BillingResult billingResult, @Nullable List<Purchase> list) {
