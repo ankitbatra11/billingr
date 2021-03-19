@@ -5,7 +5,7 @@ import android.content.Context;
 import androidx.lifecycle.LifecycleObserver;
 
 import com.abatra.android.wheelie.lifecycle.ILifecycleObserver;
-import com.abatra.billingr.analytics.FirebaseAnalyticsSkuPurchaser;
+import com.abatra.billingr.analytics.AnalyticsSkuPurchaser;
 import com.abatra.billingr.google.BillingClientFactory;
 import com.abatra.billingr.google.GoogleBillingr;
 import com.abatra.billingr.google.GooglePurchaseFetcher;
@@ -18,14 +18,14 @@ public interface Billingr extends LifecycleObserver, SkuDetailsFetcher, Purchase
     class Builder {
 
         private final Context context;
-        private boolean firebaseAnalyticsEnabled = false;
+        private boolean analyticsEnabled = false;
 
         public Builder(Context context) {
             this.context = context;
         }
 
-        public Builder setFirebaseAnalyticsEnabled(boolean firebaseAnalyticsEnabled) {
-            this.firebaseAnalyticsEnabled = firebaseAnalyticsEnabled;
+        public Builder setAnalyticsEnabled(boolean analyticsEnabled) {
+            this.analyticsEnabled = analyticsEnabled;
             return this;
         }
 
@@ -35,8 +35,8 @@ public interface Billingr extends LifecycleObserver, SkuDetailsFetcher, Purchase
             GooglePurchaseFetcher purchaseFetcher = new GooglePurchaseFetcher(billingClientSupplier);
             GoogleSkuDetailsFetcher skuDetailsFetcher = new GoogleSkuDetailsFetcher(billingClientSupplier);
             SkuPurchaser skuPurchaser = new GoogleSkuPurchaser(billingClientSupplier);
-            if (firebaseAnalyticsEnabled) {
-                skuPurchaser = new FirebaseAnalyticsSkuPurchaser(skuPurchaser);
+            if (analyticsEnabled) {
+                skuPurchaser = new AnalyticsSkuPurchaser(skuPurchaser);
             }
             return new GoogleBillingr(billingClientSupplier, purchaseFetcher, skuDetailsFetcher, skuPurchaser);
         }
