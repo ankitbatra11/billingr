@@ -3,11 +3,9 @@ package com.abatra.billingr.analytics;
 import android.app.Activity;
 import android.os.Build;
 
-import com.abatra.android.wheelie.chronicle.BeginCheckoutEventParams;
 import com.abatra.android.wheelie.chronicle.Chronicle;
-import com.abatra.android.wheelie.chronicle.PurchaseEventParams;
-import com.abatra.android.wheelie.chronicle.firebase.FirebaseBeginCheckoutEventParams;
-import com.abatra.android.wheelie.chronicle.firebase.FirebasePurchaseEventParams;
+import com.abatra.android.wheelie.chronicle.model.BeginCheckoutEventParams;
+import com.abatra.android.wheelie.chronicle.model.PurchaseEventParams;
 import com.abatra.billingr.Sku;
 import com.abatra.billingr.SkuPurchase;
 import com.abatra.billingr.SkuPurchaser;
@@ -40,14 +38,14 @@ import static org.mockito.Mockito.when;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = Build.VERSION_CODES.P)
-public class FirebaseAnalyticsSkuPurchaserTest {
+public class AnalyticsSkuPurchaserTest {
 
     private static final String SKU_ID = "skuId";
     private static final double VALUE = 3.99;
     private static final String CURRENCY = "INR";
 
     @InjectMocks
-    private FirebaseAnalyticsSkuPurchaser analyticsSkuPurchaser;
+    private AnalyticsSkuPurchaser analyticsSkuPurchaser;
 
     @Mock
     private SkuPurchaser mockedSkuPurchaser;
@@ -108,10 +106,10 @@ public class FirebaseAnalyticsSkuPurchaserTest {
         verify(mockedListener, times(1)).purchaseFlowLaunchedSuccessfully();
 
         chronicleMockedStatic.verify(times(1), () -> Chronicle.recordBeginCheckoutEvent(checkoutEventParamsArgumentCaptor.capture()));
-        assertThat(checkoutEventParamsArgumentCaptor.getValue(), instanceOf(FirebaseBeginCheckoutEventParams.class));
-        FirebaseBeginCheckoutEventParams params = (FirebaseBeginCheckoutEventParams) checkoutEventParamsArgumentCaptor.getValue();
-        assertThat(params.getValue(), equalTo(VALUE));
-        assertThat(params.getCurrency(), equalTo(CURRENCY));
+        assertThat(checkoutEventParamsArgumentCaptor.getValue(), instanceOf(BeginCheckoutEventParams.class));
+        BeginCheckoutEventParams params = checkoutEventParamsArgumentCaptor.getValue();
+        assertThat(params.getPrice().getValue(), equalTo(VALUE));
+        assertThat(params.getPrice().getCurrency(), equalTo(CURRENCY));
 
         verify(mockedSku, times(1)).getId();
         verify(mockedSku, times(1)).getTitle();
@@ -123,15 +121,15 @@ public class FirebaseAnalyticsSkuPurchaserTest {
     @Test
     public void test_updated() {
 
-        analyticsSkuPurchaser.setCheckedOutSku(mockedSku);
+        analyticsSkuPurchaser.checkedOutSku = mockedSku;
 
         analyticsSkuPurchaser.updated(Collections.singletonList(mockedSkuPurchase));
 
         chronicleMockedStatic.verify(times(1), () -> Chronicle.recordPurchaseEvent(purchaseEventParamsArgumentCaptor.capture()));
-        assertThat(purchaseEventParamsArgumentCaptor.getValue(), instanceOf(FirebasePurchaseEventParams.class));
-        FirebasePurchaseEventParams params = (FirebasePurchaseEventParams) purchaseEventParamsArgumentCaptor.getValue();
-        assertThat(params.getValue(), equalTo(VALUE));
-        assertThat(params.getCurrency(), equalTo(CURRENCY));
+        assertThat(purchaseEventParamsArgumentCaptor.getValue(), instanceOf(PurchaseEventParams.class));
+        PurchaseEventParams params = purchaseEventParamsArgumentCaptor.getValue();
+        assertThat(params.getPrice().getValue(), equalTo(VALUE));
+        assertThat(params.getPrice().getCurrency(), equalTo(CURRENCY));
 
         verify(mockedSku, times(1)).getAffiliation();
         verify(mockedSku, times(2)).getId();
