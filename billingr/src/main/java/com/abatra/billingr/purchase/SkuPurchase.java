@@ -5,4 +5,6 @@ public interface SkuPurchase {
     String getSku();
 
     String getPurchaseToken();
+
+    boolean isAcknowledgedPurchased();
 }

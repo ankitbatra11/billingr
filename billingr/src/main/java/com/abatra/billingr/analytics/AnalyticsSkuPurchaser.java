@@ -7,6 +7,8 @@ import com.abatra.android.wheelie.chronicle.model.BeginCheckoutEventParams;
 import com.abatra.android.wheelie.chronicle.model.Price;
 import com.abatra.android.wheelie.chronicle.model.PurchasableItem;
 import com.abatra.android.wheelie.chronicle.model.PurchaseEventParams;
+import com.abatra.android.wheelie.java8.Consumer;
+import com.abatra.android.wheelie.lifecycle.ILifecycleOwner;
 import com.abatra.billingr.BillingUnavailableCallback;
 import com.abatra.billingr.BillingrException;
 import com.abatra.billingr.purchase.PurchaseListener;
@@ -30,12 +32,18 @@ public class AnalyticsSkuPurchaser implements SkuPurchaser, PurchaseListener.NoO
     }
 
     @Override
+    public void observeLifecycle(ILifecycleOwner lifecycleOwner) {
+        delegate.observeLifecycle(lifecycleOwner);
+    }
+
+    @Override
     public void onPurchasesUpdated(List<SkuPurchase> skuPurchases) {
         Optional.ofNullable(checkedOutSku).ifPresent(sku -> logPurchaseEvent(sku, skuPurchases));
     }
 
     private void logPurchaseEvent(Sku sku, List<SkuPurchase> skuPurchases) {
         skuPurchases.stream()
+                .filter(SkuPurchase::isAcknowledgedPurchased)
                 .filter(skuPurchase -> skuPurchase.getSku().equalsIgnoreCase(sku.getId()))
                 .findFirst()
                 .ifPresent(skuPurchase -> Chronicle.recordPurchaseEvent(createPurchaseEventParams(sku, skuPurchase)));
@@ -73,6 +81,16 @@ public class AnalyticsSkuPurchaser implements SkuPurchaser, PurchaseListener.NoO
         delegate.removeObserver(observer);
     }
 
+    @Override
+    public void forEachObserver(Consumer<PurchaseListener> observerConsumer) {
+        delegate.forEachObserver(observerConsumer);
+    }
+
+    @Override
+    public void removeObservers() {
+        delegate.removeObservers();
+    }
+
     private void logBeginCheckoutEvent(Sku checkedOutSku) {
         Chronicle.recordBeginCheckoutEvent(createBeginCheckoutEventParams(checkedOutSku));
     }
@@ -105,5 +123,12 @@ public class AnalyticsSkuPurchaser implements SkuPurchaser, PurchaseListener.NoO
                 listener.ifPresent(l -> l.onPurchaseFlowLaunchFailed(billingrException));
             }
         }));
+    }
+
+    /*
+     * Testing
+     */
+    public SkuPurchaser getDelegate() {
+        return delegate;
     }
 }

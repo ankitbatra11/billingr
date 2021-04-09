@@ -24,4 +24,9 @@ public class GoogleSkuPurchase implements SkuPurchase {
     public Purchase getPurchase() {
         return purchase;
     }
+
+    @Override
+    public boolean isAcknowledgedPurchased() {
+        return purchase.isAcknowledged() && GoogleBillingUtils.isPurchased(purchase);
+    }
 }

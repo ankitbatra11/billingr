@@ -21,6 +21,15 @@ public class GooglePurchaseConsumer implements PurchaseConsumer {
 
     @Override
     public void consumePurchase(SkuPurchase skuPurchase, Callback callback) {
+        try {
+            tryGettingInitializedBillingClient(skuPurchase, callback);
+        } catch (Throwable error) {
+            Timber.e(error);
+            callback.onPurchaseConsumeFailed(new BillingrException(error));
+        }
+    }
+
+    private void tryGettingInitializedBillingClient(SkuPurchase skuPurchase, Callback callback) {
         billingClientSupplier.getInitializedBillingClient(new InitializedBillingClientSupplier.Listener() {
 
             @Override

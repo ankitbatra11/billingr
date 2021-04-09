@@ -23,7 +23,7 @@ import static com.android.billingclient.api.Purchase.PurchasesResult;
 
 public class GooglePurchaseFetcher implements PurchaseFetcher {
 
-    private final InitializedBillingClientSupplier billingClientSupplier;
+    final InitializedBillingClientSupplier billingClientSupplier;
     private PurchasesProcessor purchasesProcessor = PurchasesProcessor.NO_OP;
 
     public GooglePurchaseFetcher(InitializedBillingClientSupplier billingClientSupplier) {
@@ -42,6 +42,15 @@ public class GooglePurchaseFetcher implements PurchaseFetcher {
 
     @Override
     public void fetchInAppPurchases(PurchaseListener listener) {
+        try {
+            tryGettingInitializedBillingClient(listener);
+        } catch (Throwable error) {
+            Timber.e(error);
+            listener.onPurchasesUpdateFailed(new BillingrException(error));
+        }
+    }
+
+    private void tryGettingInitializedBillingClient(PurchaseListener listener) {
         billingClientSupplier.getInitializedBillingClient(new InitializedBillingClientSupplier.Listener() {
 
             @Override

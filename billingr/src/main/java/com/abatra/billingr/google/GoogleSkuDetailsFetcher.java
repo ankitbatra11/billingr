@@ -1,5 +1,6 @@
 package com.abatra.billingr.google;
 
+import com.abatra.android.wheelie.lifecycle.ILifecycleOwner;
 import com.abatra.billingr.sku.SkuDetailsFetcher;
 import com.abatra.billingr.BillingrException;
 import com.abatra.billingr.sku.Sku;
@@ -15,15 +16,28 @@ import timber.log.Timber;
 
 public class GoogleSkuDetailsFetcher implements SkuDetailsFetcher {
 
-    private final InitializedBillingClientSupplier billingClientSupplier;
+    final InitializedBillingClientSupplier billingClientSupplier;
 
     public GoogleSkuDetailsFetcher(InitializedBillingClientSupplier billingClientSupplier) {
         this.billingClientSupplier = billingClientSupplier;
     }
 
     @Override
-    public void fetchInAppSkuDetails(List<String> skus, Listener listener) {
+    public void observeLifecycle(ILifecycleOwner lifecycleOwner) {
+        billingClientSupplier.observeLifecycle(lifecycleOwner);
+    }
 
+    @Override
+    public void fetchInAppSkuDetails(List<String> skus, Listener listener) {
+        try {
+            tryGettingInitializedBillingClient(skus, listener);
+        } catch (Throwable error) {
+            Timber.e(error);
+            listener.loadingSkuDetailsFailed(new BillingrException(error));
+        }
+    }
+
+    private void tryGettingInitializedBillingClient(List<String> skus, Listener listener) {
         billingClientSupplier.getInitializedBillingClient(new InitializedBillingClientSupplier.Listener() {
             @Override
             public void initialized(BillingClient billingClient) {
@@ -63,6 +77,5 @@ public class GoogleSkuDetailsFetcher implements SkuDetailsFetcher {
                 listener.onBillingUnavailable();
             }
         });
-
     }
 }

@@ -18,27 +18,31 @@ import java.util.List;
 
 public class GoogleBillingr implements Billingr {
 
-    private final InitializedBillingClientSupplier billingClientSupplier;
-    private final PurchaseFetcher purchaseFetcher;
-    private final SkuDetailsFetcher skuDetailsFetcher;
-    private final SkuPurchaser skuPurchaser;
-    private final BillingAvailabilityChecker billingAvailabilityChecker;
+    final InitializedBillingClientSupplier billingClientSupplier;
+    final PurchaseFetcher purchaseFetcher;
+    final SkuDetailsFetcher skuDetailsFetcher;
+    final SkuPurchaser skuPurchaser;
+    final BillingAvailabilityChecker availabilityChecker;
 
     public GoogleBillingr(InitializedBillingClientSupplier billingClientSupplier,
                           PurchaseFetcher purchaseFetcher,
                           SkuDetailsFetcher skuDetailsFetcher,
                           SkuPurchaser skuPurchaser,
-                          BillingAvailabilityChecker billingAvailabilityChecker) {
+                          BillingAvailabilityChecker availabilityChecker) {
         this.billingClientSupplier = billingClientSupplier;
         this.purchaseFetcher = purchaseFetcher;
         this.skuDetailsFetcher = skuDetailsFetcher;
         this.skuPurchaser = skuPurchaser;
-        this.billingAvailabilityChecker = billingAvailabilityChecker;
+        this.availabilityChecker = availabilityChecker;
     }
 
     @Override
     public void observeLifecycle(ILifecycleOwner lifecycleOwner) {
         billingClientSupplier.observeLifecycle(lifecycleOwner);
+        purchaseFetcher.observeLifecycle(lifecycleOwner);
+        skuDetailsFetcher.observeLifecycle(lifecycleOwner);
+        skuPurchaser.observeLifecycle(lifecycleOwner);
+        availabilityChecker.observeLifecycle(lifecycleOwner);
     }
 
     @Override
@@ -88,6 +92,6 @@ public class GoogleBillingr implements Billingr {
 
     @Override
     public void checkBillingAvailability(Callback callback) {
-        billingAvailabilityChecker.checkBillingAvailability(callback);
+        availabilityChecker.checkBillingAvailability(callback);
     }
 }

@@ -6,10 +6,14 @@ import android.os.Build;
 import com.abatra.android.wheelie.chronicle.Chronicle;
 import com.abatra.android.wheelie.chronicle.model.BeginCheckoutEventParams;
 import com.abatra.android.wheelie.chronicle.model.PurchaseEventParams;
+import com.abatra.android.wheelie.java8.Consumer;
+import com.abatra.billingr.BillingUnavailableCallback;
+import com.abatra.billingr.BillingrException;
+import com.abatra.billingr.purchase.PurchaseListener;
 import com.abatra.billingr.purchase.PurchaseSkuRequest;
-import com.abatra.billingr.sku.Sku;
 import com.abatra.billingr.purchase.SkuPurchase;
 import com.abatra.billingr.purchase.SkuPurchaser;
+import com.abatra.billingr.sku.Sku;
 import com.abatra.billingr.sku.SkuType;
 
 import org.junit.After;
@@ -33,6 +37,7 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -71,6 +76,12 @@ public class AnalyticsSkuPurchaserTest {
     @Captor
     private ArgumentCaptor<PurchaseEventParams> purchaseEventParamsArgumentCaptor;
 
+    @Mock
+    private PurchaseListener mockedPurchaseListener;
+
+    @Mock
+    private Consumer<PurchaseListener> mockedPurchaseListenerConsumer;
+
     private PurchaseSkuRequest purchaseSkuRequest;
 
     @Before
@@ -92,6 +103,7 @@ public class AnalyticsSkuPurchaserTest {
         when(mockedSku.getCurrency()).thenReturn(CURRENCY);
 
         when(mockedSkuPurchase.getSku()).thenReturn(SKU_ID);
+        when(mockedSkuPurchase.isAcknowledgedPurchased()).thenReturn(true);
 
         chronicleMockedStatic = mockStatic(Chronicle.class);
 
@@ -145,5 +157,73 @@ public class AnalyticsSkuPurchaserTest {
 
         verify(mockedSkuPurchase, times(1)).getPurchaseToken();
         verify(mockedSkuPurchase, times(1)).getSku();
+    }
+
+    @Test
+    public void test_addObserver() {
+
+        analyticsSkuPurchaser.addObserver(mockedPurchaseListener);
+
+        verify(mockedSkuPurchaser, times(1)).addObserver(mockedPurchaseListener);
+    }
+
+    @Test
+    public void test_removeObserver() {
+
+        analyticsSkuPurchaser.removeObserver(mockedPurchaseListener);
+
+        verify(mockedSkuPurchaser, times(1)).removeObserver(mockedPurchaseListener);
+
+    }
+
+    @Test
+    public void test_forEachObserver() {
+
+        analyticsSkuPurchaser.forEachObserver(mockedPurchaseListenerConsumer);
+
+        verify(mockedSkuPurchaser, times(1)).forEachObserver(mockedPurchaseListenerConsumer);
+    }
+
+
+    @Test
+    public void test_removeObservers() {
+
+        analyticsSkuPurchaser.removeObservers();
+
+        verify(mockedSkuPurchaser, times(1)).removeObservers();
+    }
+
+    @Test
+    public void test_purchaser_billingUnavailable() {
+
+        doAnswer(invocation ->
+        {
+            PurchaseSkuRequest request = invocation.getArgument(0);
+            request.getListener().ifPresent(BillingUnavailableCallback::onBillingUnavailable);
+            return null;
+
+        }).when(mockedSkuPurchaser).launchPurchaseFlow(any());
+
+        analyticsSkuPurchaser.launchPurchaseFlow(purchaseSkuRequest);
+
+        verify(mockedListener, times(1)).onBillingUnavailable();
+        chronicleMockedStatic.verify(never(), () -> Chronicle.recordBeginCheckoutEvent(any()));
+    }
+
+    @Test
+    public void test_purchaser_purchaseFlowLaunchFailed() {
+
+        doAnswer(invocation ->
+        {
+            PurchaseSkuRequest request = invocation.getArgument(0);
+            request.getListener().ifPresent(l -> l.onPurchaseFlowLaunchFailed(BillingrException.unavailable()));
+            return null;
+
+        }).when(mockedSkuPurchaser).launchPurchaseFlow(any());
+
+        analyticsSkuPurchaser.launchPurchaseFlow(purchaseSkuRequest);
+
+        verify(mockedListener, times(1)).onPurchaseFlowLaunchFailed(BillingrException.unavailable());
+        chronicleMockedStatic.verify(never(), () -> Chronicle.recordBeginCheckoutEvent(any()));
     }
 }

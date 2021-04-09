@@ -7,7 +7,7 @@ import com.android.billingclient.api.BillingClient;
 
 public class GoogleBillingAvailabilityChecker implements BillingAvailabilityChecker {
 
-    private final InitializedBillingClientSupplier billingClientSupplier;
+    final InitializedBillingClientSupplier billingClientSupplier;
 
     public GoogleBillingAvailabilityChecker(InitializedBillingClientSupplier billingClientSupplier) {
         this.billingClientSupplier = billingClientSupplier;

@@ -1,11 +1,12 @@
 package com.abatra.billingr.sku;
 
+import com.abatra.android.wheelie.lifecycle.ILifecycleObserver;
 import com.abatra.billingr.BillingUnavailableCallback;
 import com.abatra.billingr.BillingrException;
 
 import java.util.List;
 
-public interface SkuDetailsFetcher {
+public interface SkuDetailsFetcher extends ILifecycleObserver {
 
     void fetchInAppSkuDetails(List<String> skus, Listener listener);
 

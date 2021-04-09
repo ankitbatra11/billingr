@@ -1,6 +1,7 @@
 package com.abatra.billingr.google;
 
 import com.abatra.android.wheelie.java8.Consumer;
+import com.abatra.android.wheelie.lifecycle.ILifecycleOwner;
 import com.abatra.billingr.purchase.PurchaseListener;
 import com.abatra.billingr.purchase.PurchaseSkuRequest;
 import com.abatra.billingr.purchase.SkuPurchaser;
@@ -15,10 +16,15 @@ import timber.log.Timber;
 
 public class GoogleSkuPurchaser implements SkuPurchaser {
 
-    private final InitializedBillingClientSupplier billingClientSupplier;
+    final InitializedBillingClientSupplier billingClientSupplier;
 
     public GoogleSkuPurchaser(InitializedBillingClientSupplier billingClientSupplier) {
         this.billingClientSupplier = billingClientSupplier;
+    }
+
+    @Override
+    public void observeLifecycle(ILifecycleOwner lifecycleOwner) {
+        billingClientSupplier.observeLifecycle(lifecycleOwner);
     }
 
     @Override
@@ -43,7 +49,19 @@ public class GoogleSkuPurchaser implements SkuPurchaser {
 
     @Override
     public void launchPurchaseFlow(PurchaseSkuRequest purchaseSkuRequest) {
+        try {
+            tryGettingInitializedBillingClient(purchaseSkuRequest);
+        } catch (Throwable error) {
+            Timber.e(error);
+            onPurchaseFlowLaunchFailed(purchaseSkuRequest, error);
+        }
+    }
 
+    private void onPurchaseFlowLaunchFailed(PurchaseSkuRequest purchaseSkuRequest, Throwable error) {
+        purchaseSkuRequest.getListener().ifPresent(l -> l.onPurchaseFlowLaunchFailed(new BillingrException(error)));
+    }
+
+    private void tryGettingInitializedBillingClient(PurchaseSkuRequest purchaseSkuRequest) {
         billingClientSupplier.getInitializedBillingClient(new InitializedBillingClientSupplier.Listener() {
 
             @Override
@@ -54,13 +72,13 @@ public class GoogleSkuPurchaser implements SkuPurchaser {
             @Override
             public void initializationFailed(BillingrException billingrException) {
                 Timber.e(billingrException);
-                purchaseSkuRequest.getListener().ifPresent(l -> l.onPurchaseFlowLaunchFailed(billingrException));
+                onPurchaseFlowLaunchFailed(purchaseSkuRequest, billingrException);
             }
 
             @Override
             public void onBillingUnavailable() {
                 Timber.w("onBillingUnavailable");
-                purchaseSkuRequest.getListener().ifPresent(SkuPurchaser.Listener::onBillingUnavailable);
+                purchaseSkuRequest.getListener().ifPresent(Listener::onBillingUnavailable);
             }
         });
     }
@@ -93,7 +111,7 @@ public class GoogleSkuPurchaser implements SkuPurchaser {
         }
         purchaseSkuRequest.getListener().ifPresent(l -> {
             GoogleBillingrException billingrException = GoogleBillingrException.from(billingResult);
-            l.onPurchaseFlowLaunchFailed(billingrException);
+            onPurchaseFlowLaunchFailed(purchaseSkuRequest, billingrException);
         });
     }
 }

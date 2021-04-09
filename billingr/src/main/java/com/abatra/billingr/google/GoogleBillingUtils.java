@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 
 import timber.log.Timber;
 
-public class GoogleBillingUtils {
+public final class GoogleBillingUtils {
 
     private GoogleBillingUtils() {
     }
