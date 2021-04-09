@@ -35,6 +35,7 @@ public final class GoogleBillingUtils {
      * @return Premium
      */
     public static String removeAppName(String inAppProductName) {
+        inAppProductName = Optional.ofNullable(inAppProductName).orElse("");
         String result = inAppProductName;
         int indexOf = inAppProductName.indexOf('(');
         if (indexOf != -1) {

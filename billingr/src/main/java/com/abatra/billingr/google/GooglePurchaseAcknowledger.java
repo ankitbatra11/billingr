@@ -11,7 +11,7 @@ import timber.log.Timber;
 
 public class GooglePurchaseAcknowledger implements PurchaseAcknowledger {
 
-    private final InitializedBillingClientSupplier billingClientSupplier;
+    final InitializedBillingClientSupplier billingClientSupplier;
 
     public GooglePurchaseAcknowledger(InitializedBillingClientSupplier billingClientSupplier) {
         this.billingClientSupplier = billingClientSupplier;
@@ -63,7 +63,7 @@ public class GooglePurchaseAcknowledger implements PurchaseAcknowledger {
             callback.onPurchaseAcknowledged();
         } else {
             if (GoogleBillingUtils.isPurchased(googleSkuPurchase.getPurchase())) {
-                acknowledgePurchase(billingClient, googleSkuPurchase);
+                acknowledgePurchase(googleSkuPurchase, callback, billingClient);
             } else {
                 String message = "Purchase=" + skuPurchase + " has not been purchased yet!";
                 callback.onPurchaseAcknowledgeFailed(new GoogleBillingrException(message));
@@ -71,7 +71,7 @@ public class GooglePurchaseAcknowledger implements PurchaseAcknowledger {
         }
     }
 
-    private void acknowledgePurchase(BillingClient billingClient, GoogleSkuPurchase googleSkuPurchase) {
+    private void acknowledgePurchase(GoogleSkuPurchase googleSkuPurchase, Callback callback, BillingClient billingClient) {
 
         AcknowledgePurchaseParams acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
                 .setPurchaseToken(googleSkuPurchase.getPurchaseToken())
@@ -80,9 +80,13 @@ public class GooglePurchaseAcknowledger implements PurchaseAcknowledger {
         billingClient.acknowledgePurchase(acknowledgePurchaseParams, result -> {
             if (GoogleBillingUtils.isOk(result)) {
                 Timber.i("purchase=%s acknowledged successfully!", googleSkuPurchase);
+                callback.onPurchaseAcknowledged();
             } else {
+
                 Timber.w("unexpected billing result=%s from acknowledgePurchase for sku=%s",
                         GoogleBillingUtils.toString(result), googleSkuPurchase.getSku());
+
+                callback.onPurchaseAcknowledgeFailed(GoogleBillingrException.from(result));
             }
         });
     }

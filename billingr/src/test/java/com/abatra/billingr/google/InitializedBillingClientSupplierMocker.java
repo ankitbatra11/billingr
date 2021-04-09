@@ -4,13 +4,18 @@ import com.abatra.billingr.BillingUnavailableCallback;
 import com.abatra.billingr.BillingrException;
 import com.android.billingclient.api.BillingClient;
 
+import org.mockito.Mockito;
+
 import java.util.function.Consumer;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 
 public class InitializedBillingClientSupplierMocker {
+
+    public static final RuntimeException GET_ERROR = new RuntimeException("Simulated get failure");
 
     public static InitializedBillingClientSupplier mockUnavailable() {
         return mockBehavior(BillingUnavailableCallback::onBillingUnavailable);
@@ -35,7 +40,13 @@ public class InitializedBillingClientSupplierMocker {
         return mockBehavior(listener -> listener.initialized(billingClient));
     }
 
-    public static InitializedBillingClientSupplier mockFailure(BillingrException error) {
+    public static InitializedBillingClientSupplier mockInitializationFailure(BillingrException error) {
         return mockBehavior(listener -> listener.initializationFailed(error));
+    }
+
+    public static InitializedBillingClientSupplier mockGetClientFailure() {
+        InitializedBillingClientSupplier supplier = mock(InitializedBillingClientSupplier.class);
+        doThrow(GET_ERROR).when(supplier).getInitializedBillingClient(any());
+        return supplier;
     }
 }

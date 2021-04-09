@@ -11,8 +11,12 @@ public final class BillingResultMocker {
     public static final int RESPONSE_CODE = 1;
 
     public static BillingResult mockBillingResult() {
+        return mockBillingResult(RESPONSE_CODE);
+    }
+
+    public static BillingResult mockBillingResult(int responseCode) {
         BillingResult billingResult = mock(BillingResult.class);
-        when(billingResult.getResponseCode()).thenReturn(RESPONSE_CODE);
+        when(billingResult.getResponseCode()).thenReturn(responseCode);
         when(billingResult.getDebugMessage()).thenReturn(DEBUG_MESSAGE);
         return billingResult;
     }
