@@ -2,8 +2,8 @@ package com.abatra.billingr.google;
 
 import android.os.Build;
 
-import com.abatra.billingr.PurchaseListener;
-import com.abatra.billingr.SkuPurchase;
+import com.abatra.billingr.purchase.PurchaseListener;
+import com.abatra.billingr.purchase.SkuPurchase;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingResult;
@@ -183,8 +183,8 @@ public class InitializedBillingClientSupplierTest {
         purchasesUpdatedListenerArgumentCaptor.getValue().onPurchasesUpdated(mockedBillingResult,
                 Arrays.asList(skuPurchase, discountedSkuPurchase));
 
-        verify(mockedPurchaseListenerFirst, times(1)).updated(skuPurchasesArgumentCaptor.capture());
-        verify(mockedPurchaseListenerSecond, times(1)).updated(skuPurchasesArgumentCaptor.capture());
+        verify(mockedPurchaseListenerFirst, times(1)).onPurchasesUpdated(skuPurchasesArgumentCaptor.capture());
+        verify(mockedPurchaseListenerSecond, times(1)).onPurchasesUpdated(skuPurchasesArgumentCaptor.capture());
 
         assertThat(skuPurchasesArgumentCaptor.getAllValues(), hasSize(2));
         verifyUpdatedPurchases(skuPurchasesArgumentCaptor.getAllValues().get(0));

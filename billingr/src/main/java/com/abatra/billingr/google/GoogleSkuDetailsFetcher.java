@@ -1,9 +1,9 @@
 package com.abatra.billingr.google;
 
-import com.abatra.billingr.SkuDetailsFetcher;
+import com.abatra.billingr.sku.SkuDetailsFetcher;
 import com.abatra.billingr.BillingrException;
-import com.abatra.billingr.Sku;
-import com.abatra.billingr.SkuType;
+import com.abatra.billingr.sku.Sku;
+import com.abatra.billingr.sku.SkuType;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.SkuDetails;
 import com.android.billingclient.api.SkuDetailsParams;

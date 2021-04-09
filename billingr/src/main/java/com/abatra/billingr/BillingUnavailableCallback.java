@@ -1,5 +1,5 @@
 package com.abatra.billingr;
 
-public interface BillingAvailabilityCallback {
+public interface BillingUnavailableCallback {
     void onBillingUnavailable();
 }

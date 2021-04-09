@@ -1,9 +1,17 @@
 package com.abatra.billingr.google;
 
-import com.abatra.billingr.SkuType;
+import com.abatra.billingr.BillingrException;
+import com.abatra.billingr.purchase.SkuPurchase;
+import com.abatra.billingr.sku.SkuType;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingResult;
+import com.android.billingclient.api.Purchase;
 import com.google.common.base.MoreObjects;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import timber.log.Timber;
 
@@ -65,5 +73,19 @@ public class GoogleBillingUtils {
 
     public static boolean isUnavailable(BillingResult billingResult) {
         return billingResult.getResponseCode() == BillingClient.BillingResponseCode.BILLING_UNAVAILABLE;
+    }
+
+    public static BillingrException reportErrorAndGet(BillingResult billingResult, String message, Object... args) {
+        BillingrException billingrException = GoogleBillingrException.from(billingResult);
+        Timber.e(billingrException, message, args);
+        return billingrException;
+    }
+
+    public static List<SkuPurchase> toSkuPurchases(List<Purchase> purchases) {
+        return Optional.ofNullable(purchases)
+                .orElse(Collections.emptyList())
+                .stream()
+                .map(GoogleSkuPurchase::new)
+                .collect(Collectors.toList());
     }
 }

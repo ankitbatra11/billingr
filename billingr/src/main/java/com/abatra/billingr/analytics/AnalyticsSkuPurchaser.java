@@ -1,7 +1,5 @@
 package com.abatra.billingr.analytics;
 
-import android.app.Activity;
-
 import androidx.annotation.Nullable;
 
 import com.abatra.android.wheelie.chronicle.Chronicle;
@@ -9,16 +7,18 @@ import com.abatra.android.wheelie.chronicle.model.BeginCheckoutEventParams;
 import com.abatra.android.wheelie.chronicle.model.Price;
 import com.abatra.android.wheelie.chronicle.model.PurchasableItem;
 import com.abatra.android.wheelie.chronicle.model.PurchaseEventParams;
+import com.abatra.billingr.BillingUnavailableCallback;
 import com.abatra.billingr.BillingrException;
-import com.abatra.billingr.PurchaseListener;
-import com.abatra.billingr.Sku;
-import com.abatra.billingr.SkuPurchase;
-import com.abatra.billingr.SkuPurchaser;
+import com.abatra.billingr.purchase.PurchaseListener;
+import com.abatra.billingr.purchase.PurchaseSkuRequest;
+import com.abatra.billingr.sku.Sku;
+import com.abatra.billingr.purchase.SkuPurchase;
+import com.abatra.billingr.purchase.SkuPurchaser;
 
 import java.util.List;
 import java.util.Optional;
 
-public class AnalyticsSkuPurchaser implements SkuPurchaser, PurchaseListener {
+public class AnalyticsSkuPurchaser implements SkuPurchaser, PurchaseListener.NoOpPurchaseListener {
 
     private final SkuPurchaser delegate;
     @Nullable
@@ -30,7 +30,7 @@ public class AnalyticsSkuPurchaser implements SkuPurchaser, PurchaseListener {
     }
 
     @Override
-    public void updated(List<SkuPurchase> skuPurchases) {
+    public void onPurchasesUpdated(List<SkuPurchase> skuPurchases) {
         Optional.ofNullable(checkedOutSku).ifPresent(sku -> logPurchaseEvent(sku, skuPurchases));
     }
 
@@ -73,29 +73,6 @@ public class AnalyticsSkuPurchaser implements SkuPurchaser, PurchaseListener {
         delegate.removeObserver(observer);
     }
 
-    @Override
-    public void launchPurchaseFlow(Sku sku, Activity activity, Listener listener) {
-        delegate.launchPurchaseFlow(sku, activity, new Listener() {
-
-            @Override
-            public void onBillingUnavailable() {
-                listener.onBillingUnavailable();
-            }
-
-            @Override
-            public void purchaseFlowLaunchedSuccessfully() {
-                checkedOutSku = sku;
-                logBeginCheckoutEvent(checkedOutSku);
-                listener.purchaseFlowLaunchedSuccessfully();
-            }
-
-            @Override
-            public void purchaseFlowLaunchFailed(BillingrException billingrException) {
-                listener.purchaseFlowLaunchFailed(billingrException);
-            }
-        });
-    }
-
     private void logBeginCheckoutEvent(Sku checkedOutSku) {
         Chronicle.recordBeginCheckoutEvent(createBeginCheckoutEventParams(checkedOutSku));
     }
@@ -104,5 +81,29 @@ public class AnalyticsSkuPurchaser implements SkuPurchaser, PurchaseListener {
         return new BeginCheckoutEventParams()
                 .setPrice(createPrice(checkedOutSku))
                 .addItem(createPurchasableItem(checkedOutSku));
+    }
+
+    @Override
+    public void launchPurchaseFlow(PurchaseSkuRequest purchaseSkuRequest) {
+        Optional<Listener> listener = purchaseSkuRequest.getListener();
+        delegate.launchPurchaseFlow(new PurchaseSkuRequest(purchaseSkuRequest).setListener(new Listener() {
+
+            @Override
+            public void onBillingUnavailable() {
+                listener.ifPresent(BillingUnavailableCallback::onBillingUnavailable);
+            }
+
+            @Override
+            public void onPurchaseFlowLaunchedSuccessfully() {
+                checkedOutSku = purchaseSkuRequest.getSku();
+                logBeginCheckoutEvent(checkedOutSku);
+                listener.ifPresent(Listener::onPurchaseFlowLaunchedSuccessfully);
+            }
+
+            @Override
+            public void onPurchaseFlowLaunchFailed(BillingrException billingrException) {
+                listener.ifPresent(l -> l.onPurchaseFlowLaunchFailed(billingrException));
+            }
+        }));
     }
 }

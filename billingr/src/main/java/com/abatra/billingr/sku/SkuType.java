@@ -1,4 +1,4 @@
-package com.abatra.billingr;
+package com.abatra.billingr.sku;
 
 public enum SkuType {
     IN_APP_PRODUCT {

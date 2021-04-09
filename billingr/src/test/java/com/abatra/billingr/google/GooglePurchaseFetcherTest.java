@@ -2,7 +2,7 @@ package com.abatra.billingr.google;
 
 import android.os.Build;
 
-import com.abatra.billingr.PurchaseListener;
+import com.abatra.billingr.purchase.PurchaseListener;
 
 import org.junit.Before;
 import org.junit.Test;

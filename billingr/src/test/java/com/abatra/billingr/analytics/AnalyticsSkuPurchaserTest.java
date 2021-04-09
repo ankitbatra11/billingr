@@ -6,10 +6,11 @@ import android.os.Build;
 import com.abatra.android.wheelie.chronicle.Chronicle;
 import com.abatra.android.wheelie.chronicle.model.BeginCheckoutEventParams;
 import com.abatra.android.wheelie.chronicle.model.PurchaseEventParams;
-import com.abatra.billingr.Sku;
-import com.abatra.billingr.SkuPurchase;
-import com.abatra.billingr.SkuPurchaser;
-import com.abatra.billingr.SkuType;
+import com.abatra.billingr.purchase.PurchaseSkuRequest;
+import com.abatra.billingr.sku.Sku;
+import com.abatra.billingr.purchase.SkuPurchase;
+import com.abatra.billingr.purchase.SkuPurchaser;
+import com.abatra.billingr.sku.SkuType;
 
 import org.junit.After;
 import org.junit.Before;
@@ -70,6 +71,8 @@ public class AnalyticsSkuPurchaserTest {
     @Captor
     private ArgumentCaptor<PurchaseEventParams> purchaseEventParamsArgumentCaptor;
 
+    private PurchaseSkuRequest purchaseSkuRequest;
+
     @Before
     public void setup() {
 
@@ -77,11 +80,11 @@ public class AnalyticsSkuPurchaserTest {
 
         doAnswer(invocation ->
         {
-            SkuPurchaser.Listener listener = invocation.getArgument(2);
-            listener.purchaseFlowLaunchedSuccessfully();
+            PurchaseSkuRequest request = invocation.getArgument(0);
+            request.getListener().ifPresent(SkuPurchaser.Listener::onPurchaseFlowLaunchedSuccessfully);
             return null;
 
-        }).when(mockedSkuPurchaser).launchPurchaseFlow(any(), any(), any());
+        }).when(mockedSkuPurchaser).launchPurchaseFlow(any());
 
         when(mockedSku.getId()).thenReturn(SKU_ID);
         when(mockedSku.getType()).thenReturn(SkuType.IN_APP_PRODUCT);
@@ -91,6 +94,8 @@ public class AnalyticsSkuPurchaserTest {
         when(mockedSkuPurchase.getSku()).thenReturn(SKU_ID);
 
         chronicleMockedStatic = mockStatic(Chronicle.class);
+
+        purchaseSkuRequest = new PurchaseSkuRequest(mockedActivity, mockedSku).setListener(mockedListener);
     }
 
     @After
@@ -101,9 +106,9 @@ public class AnalyticsSkuPurchaserTest {
     @Test
     public void test_launchPurchaseFlow() {
 
-        analyticsSkuPurchaser.launchPurchaseFlow(mockedSku, mockedActivity, mockedListener);
+        analyticsSkuPurchaser.launchPurchaseFlow(purchaseSkuRequest);
 
-        verify(mockedListener, times(1)).purchaseFlowLaunchedSuccessfully();
+        verify(mockedListener, times(1)).onPurchaseFlowLaunchedSuccessfully();
 
         chronicleMockedStatic.verify(times(1), () -> Chronicle.recordBeginCheckoutEvent(checkoutEventParamsArgumentCaptor.capture()));
         assertThat(checkoutEventParamsArgumentCaptor.getValue(), instanceOf(BeginCheckoutEventParams.class));
@@ -123,7 +128,7 @@ public class AnalyticsSkuPurchaserTest {
 
         analyticsSkuPurchaser.checkedOutSku = mockedSku;
 
-        analyticsSkuPurchaser.updated(Collections.singletonList(mockedSkuPurchase));
+        analyticsSkuPurchaser.onPurchasesUpdated(Collections.singletonList(mockedSkuPurchase));
 
         chronicleMockedStatic.verify(times(1), () -> Chronicle.recordPurchaseEvent(purchaseEventParamsArgumentCaptor.capture()));
         assertThat(purchaseEventParamsArgumentCaptor.getValue(), instanceOf(PurchaseEventParams.class));
