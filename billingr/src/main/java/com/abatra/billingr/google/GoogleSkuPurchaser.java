@@ -66,7 +66,12 @@ public class GoogleSkuPurchaser implements SkuPurchaser {
 
             @Override
             public void initialized(BillingClient billingClient) {
-                launchBillingFlow(billingClient, purchaseSkuRequest);
+                try {
+                    launchBillingFlow(billingClient, purchaseSkuRequest);
+                } catch (Throwable error) {
+                    Timber.e(error);
+                    onPurchaseFlowLaunchFailed(purchaseSkuRequest, error);
+                }
             }
 
             @Override

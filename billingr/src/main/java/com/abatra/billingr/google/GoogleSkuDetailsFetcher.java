@@ -43,6 +43,7 @@ public class GoogleSkuDetailsFetcher implements SkuDetailsFetcher {
 
     private void tryGettingInitializedBillingClient(List<String> skus, Listener listener) {
         billingClientSupplier.getInitializedBillingClient(new InitializedBillingClientSupplier.Listener() {
+
             @Override
             public void initialized(BillingClient billingClient) {
                 try {
