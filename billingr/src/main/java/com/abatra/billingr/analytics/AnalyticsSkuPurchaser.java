@@ -37,7 +37,7 @@ public class AnalyticsSkuPurchaser implements SkuPurchaser, PurchaseListener.NoO
     }
 
     @Override
-    public void onPurchasesUpdated(List<SkuPurchase> skuPurchases) {
+    public void onPurchasesLoaded(List<SkuPurchase> skuPurchases) {
         Optional.ofNullable(checkedOutSku).ifPresent(sku -> logPurchaseEvent(sku, skuPurchases));
     }
 

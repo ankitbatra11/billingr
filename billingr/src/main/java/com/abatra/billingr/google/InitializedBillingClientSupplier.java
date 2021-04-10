@@ -150,7 +150,7 @@ public class InitializedBillingClientSupplier implements LifecycleObserverObserv
                 if (skuPurchases.isEmpty()) {
                     Timber.i("purchase list is empty");
                 } else {
-                    forEachObserver(purchaseListener -> purchaseListener.onPurchasesUpdated(skuPurchases));
+                    forEachObserver(purchaseListener -> purchaseListener.onPurchasesLoaded(skuPurchases));
                 }
             } else {
                 Timber.w("billing result is OK purchase list is null");

@@ -35,12 +35,12 @@ public class BillingDemoActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onPurchasesUpdated(List<SkuPurchase> skuPurchases) {
+            public void onPurchasesLoaded(List<SkuPurchase> skuPurchases) {
                 showMessage("purchases=" + skuPurchases);
             }
 
             @Override
-            public void onPurchasesUpdateFailed(BillingrException error) {
+            public void onPurchasesLoadFailed(BillingrException error) {
                 showMessage("error=" + error);
             }
         });

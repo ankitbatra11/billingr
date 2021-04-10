@@ -7,31 +7,24 @@ import java.util.List;
 
 public interface PurchaseListener extends BillingUnavailableCallback {
 
-    static PurchaseListener noOp() {
-        return NoOpPurchaseListener.INSTANCE;
-    }
-
     void onBillingUnavailable();
 
-    void onPurchasesUpdated(List<SkuPurchase> skuPurchases);
+    void onPurchasesLoaded(List<SkuPurchase> skuPurchases);
 
-    void onPurchasesUpdateFailed(BillingrException error);
+    void onPurchasesLoadFailed(BillingrException error);
 
     interface NoOpPurchaseListener extends PurchaseListener {
-
-        NoOpPurchaseListener INSTANCE = new NoOpPurchaseListener() {
-        };
 
         @Override
         default void onBillingUnavailable() {
         }
 
         @Override
-        default void onPurchasesUpdated(List<SkuPurchase> skuPurchases) {
+        default void onPurchasesLoaded(List<SkuPurchase> skuPurchases) {
         }
 
         @Override
-        default void onPurchasesUpdateFailed(BillingrException error) {
+        default void onPurchasesLoadFailed(BillingrException error) {
         }
     }
 }

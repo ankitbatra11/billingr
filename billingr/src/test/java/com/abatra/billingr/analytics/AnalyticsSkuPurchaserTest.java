@@ -140,7 +140,7 @@ public class AnalyticsSkuPurchaserTest {
 
         analyticsSkuPurchaser.checkedOutSku = mockedSku;
 
-        analyticsSkuPurchaser.onPurchasesUpdated(Collections.singletonList(mockedSkuPurchase));
+        analyticsSkuPurchaser.onPurchasesLoaded(Collections.singletonList(mockedSkuPurchase));
 
         chronicleMockedStatic.verify(times(1), () -> Chronicle.recordPurchaseEvent(purchaseEventParamsArgumentCaptor.capture()));
         assertThat(purchaseEventParamsArgumentCaptor.getValue(), instanceOf(PurchaseEventParams.class));

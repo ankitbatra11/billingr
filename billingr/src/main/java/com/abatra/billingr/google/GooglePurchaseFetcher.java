@@ -48,7 +48,7 @@ public class GooglePurchaseFetcher implements PurchaseFetcher {
             tryGettingInitializedBillingClient(listener);
         } catch (Throwable error) {
             Timber.e(error);
-            listener.onPurchasesUpdateFailed(new BillingrException(error));
+            listener.onPurchasesLoadFailed(new BillingrException(error));
         }
     }
 
@@ -57,12 +57,17 @@ public class GooglePurchaseFetcher implements PurchaseFetcher {
 
             @Override
             public void initialized(BillingClient billingClient) {
-                queryPurchases(billingClient, listener);
+                try {
+                    queryPurchases(billingClient, listener);
+                } catch (Throwable error) {
+                    Timber.e(error);
+                    listener.onPurchasesLoadFailed(new BillingrException(error));
+                }
             }
 
             @Override
             public void initializationFailed(BillingrException billingrException) {
-                listener.onPurchasesUpdateFailed(billingrException);
+                listener.onPurchasesLoadFailed(billingrException);
             }
 
             @Override
@@ -72,12 +77,12 @@ public class GooglePurchaseFetcher implements PurchaseFetcher {
         });
     }
 
-    private void queryPurchases(BillingClient billingClient, PurchaseListener listener) {
+    private void queryPurchases(BillingClient billingClient, PurchaseListener listener) throws InterruptedException {
         PurchasesResult purchasesResult = billingClient.queryPurchases(BillingClient.SkuType.INAPP);
         if (GoogleBillingUtils.isOk(purchasesResult.getBillingResult())) {
             List<Purchase> purchases = getPurchases(purchasesResult);
             if (purchases.isEmpty()) {
-                listener.onPurchasesUpdated(Collections.emptyList());
+                listener.onPurchasesLoaded(Collections.emptyList());
             } else {
                 processPurchases(listener, purchases);
             }
@@ -86,11 +91,11 @@ public class GooglePurchaseFetcher implements PurchaseFetcher {
             Timber.w("unexpected billing result=%s from inApp query purchases",
                     GoogleBillingUtils.toString(purchasesResult.getBillingResult()));
 
-            listener.onPurchasesUpdateFailed(GoogleBillingrException.from(purchasesResult.getBillingResult()));
+            listener.onPurchasesLoadFailed(GoogleBillingrException.from(purchasesResult.getBillingResult()));
         }
     }
 
-    private void processPurchases(PurchaseListener listener, List<Purchase> purchases) {
+    private void processPurchases(PurchaseListener listener, List<Purchase> purchases) throws InterruptedException {
         List<SkuPurchase> skuPurchases = new CopyOnWriteArrayList<>();
         CountDownLatch countDownLatch = new CountDownLatch(purchases.size());
         purchasesProcessor.processPurchases(GoogleBillingUtils.toSkuPurchases(purchases), new PurchasesProcessor.Listener() {
@@ -109,12 +114,8 @@ public class GooglePurchaseFetcher implements PurchaseFetcher {
                 countDownLatch.countDown();
             }
         });
-        try {
-            countDownLatch.await();
-            listener.onPurchasesUpdated(skuPurchases);
-        } catch (InterruptedException e) {
-            listener.onPurchasesUpdateFailed(new GoogleBillingrException(e));
-        }
+        countDownLatch.await();
+        listener.onPurchasesLoaded(skuPurchases);
     }
 
     @NotNull

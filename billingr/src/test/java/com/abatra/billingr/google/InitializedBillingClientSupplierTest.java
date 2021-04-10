@@ -183,8 +183,8 @@ public class InitializedBillingClientSupplierTest {
         purchasesUpdatedListenerArgumentCaptor.getValue().onPurchasesUpdated(mockedBillingResult,
                 Arrays.asList(skuPurchase, discountedSkuPurchase));
 
-        verify(mockedPurchaseListenerFirst, times(1)).onPurchasesUpdated(skuPurchasesArgumentCaptor.capture());
-        verify(mockedPurchaseListenerSecond, times(1)).onPurchasesUpdated(skuPurchasesArgumentCaptor.capture());
+        verify(mockedPurchaseListenerFirst, times(1)).onPurchasesLoaded(skuPurchasesArgumentCaptor.capture());
+        verify(mockedPurchaseListenerSecond, times(1)).onPurchasesLoaded(skuPurchasesArgumentCaptor.capture());
 
         assertThat(skuPurchasesArgumentCaptor.getAllValues(), hasSize(2));
         verifyUpdatedPurchases(skuPurchasesArgumentCaptor.getAllValues().get(0));
