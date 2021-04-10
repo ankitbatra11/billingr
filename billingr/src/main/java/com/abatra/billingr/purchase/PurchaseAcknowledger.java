@@ -17,9 +17,6 @@ public interface PurchaseAcknowledger extends ILifecycleObserver {
 
     interface NoOpCallback extends Callback {
 
-        NoOpCallback INSTANCE = new NoOpCallback() {
-        };
-
         @Override
         default void onPurchaseAcknowledged() {
 

@@ -2,6 +2,7 @@ package com.abatra.billingr.google;
 
 import com.abatra.android.wheelie.lifecycle.ILifecycleOwner;
 import com.abatra.billingr.BillingrException;
+import com.abatra.billingr.purchase.ProcessLessPurchasesProcessor;
 import com.abatra.billingr.purchase.PurchaseFetcher;
 import com.abatra.billingr.purchase.PurchaseListener;
 import com.abatra.billingr.purchase.PurchasesProcessor;
@@ -24,7 +25,7 @@ import static com.android.billingclient.api.Purchase.PurchasesResult;
 public class GooglePurchaseFetcher implements PurchaseFetcher {
 
     final InitializedBillingClientSupplier billingClientSupplier;
-    private PurchasesProcessor purchasesProcessor = PurchasesProcessor.NO_OP;
+    private PurchasesProcessor purchasesProcessor = ProcessLessPurchasesProcessor.INSTANCE;
 
     public GooglePurchaseFetcher(InitializedBillingClientSupplier billingClientSupplier) {
         this.billingClientSupplier = billingClientSupplier;
@@ -38,6 +39,7 @@ public class GooglePurchaseFetcher implements PurchaseFetcher {
     @Override
     public void observeLifecycle(ILifecycleOwner lifecycleOwner) {
         billingClientSupplier.observeLifecycle(lifecycleOwner);
+        purchasesProcessor.observeLifecycle(lifecycleOwner);
     }
 
     @Override
@@ -92,6 +94,7 @@ public class GooglePurchaseFetcher implements PurchaseFetcher {
         List<SkuPurchase> skuPurchases = new CopyOnWriteArrayList<>();
         CountDownLatch countDownLatch = new CountDownLatch(purchases.size());
         purchasesProcessor.processPurchases(GoogleBillingUtils.toSkuPurchases(purchases), new PurchasesProcessor.Listener() {
+
             @Override
             public void onProcessed(SkuPurchase skuPurchase) {
                 try {

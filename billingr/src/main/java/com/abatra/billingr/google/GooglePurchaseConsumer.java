@@ -1,5 +1,6 @@
 package com.abatra.billingr.google;
 
+import com.abatra.android.wheelie.lifecycle.ILifecycleOwner;
 import com.abatra.billingr.BillingrException;
 import com.abatra.billingr.purchase.PurchaseConsumer;
 import com.abatra.billingr.purchase.SkuPurchase;
@@ -17,6 +18,11 @@ public class GooglePurchaseConsumer implements PurchaseConsumer {
 
     public GooglePurchaseConsumer(InitializedBillingClientSupplier billingClientSupplier) {
         this.billingClientSupplier = billingClientSupplier;
+    }
+
+    @Override
+    public void observeLifecycle(ILifecycleOwner lifecycleOwner) {
+        billingClientSupplier.observeLifecycle(lifecycleOwner);
     }
 
     @Override

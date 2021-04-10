@@ -7,9 +7,6 @@ import java.util.List;
 
 public interface PurchasesProcessor extends ILifecycleObserver {
 
-    PurchasesProcessor NO_OP = (purchases, listener) -> {
-    };
-
     void processPurchases(List<SkuPurchase> purchases, Listener listener);
 
     interface Listener {
