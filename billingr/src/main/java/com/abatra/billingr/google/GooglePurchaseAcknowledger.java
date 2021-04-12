@@ -66,6 +66,7 @@ public class GooglePurchaseAcknowledger implements PurchaseAcknowledger {
                 acknowledgePurchase(googleSkuPurchase, callback, billingClient);
             } else {
                 String message = "Purchase=" + skuPurchase + " has not been purchased yet!";
+                Timber.w(message);
                 callback.onPurchaseAcknowledgeFailed(new GoogleBillingrException(message));
             }
         }

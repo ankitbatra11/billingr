@@ -2,10 +2,17 @@ package com.abatra.billingr;
 
 abstract public class AbstractBillingrBuilder implements BillingrBuilder {
 
-    protected boolean analyticsEnabled = false;
+    private boolean analyticsEnabled = false;
 
     @Override
     public void setAnalyticsEnabled(boolean analyticsEnabled) {
         this.analyticsEnabled = analyticsEnabled;
     }
+
+    @Override
+    public Billingr build() {
+        return build(analyticsEnabled);
+    }
+
+    protected abstract Billingr build(boolean analyticsEnabled);
 }

@@ -3,10 +3,8 @@ package com.abatra.billingr.google;
 import android.content.Context;
 
 import com.abatra.billingr.AbstractBillingrBuilder;
-import com.abatra.billingr.BillingAvailabilityChecker;
 import com.abatra.billingr.Billingr;
 import com.abatra.billingr.analytics.AnalyticsSkuPurchaser;
-import com.abatra.billingr.purchase.SkuPurchaser;
 
 public class GoogleBillingrBuilder extends AbstractBillingrBuilder {
 
@@ -17,16 +15,16 @@ public class GoogleBillingrBuilder extends AbstractBillingrBuilder {
     }
 
     @Override
-    public Billingr build() {
+    protected Billingr build(boolean analyticsEnabled) {
         BillingClientFactory billingClientFactory = new BillingClientFactory(context);
         InitializedBillingClientSupplier billingClientSupplier = new InitializedBillingClientSupplier(billingClientFactory);
-        GooglePurchaseFetcher purchaseFetcher = new GooglePurchaseFetcher(billingClientSupplier);
-        GoogleSkuDetailsFetcher skuDetailsFetcher = new GoogleSkuDetailsFetcher(billingClientSupplier);
-        SkuPurchaser skuPurchaser = new GoogleSkuPurchaser(billingClientSupplier);
-        if (analyticsEnabled) {
-            skuPurchaser = new AnalyticsSkuPurchaser(skuPurchaser);
-        }
-        BillingAvailabilityChecker availabilityChecker = new GoogleBillingAvailabilityChecker(billingClientSupplier);
-        return new GoogleBillingr(billingClientSupplier, purchaseFetcher, skuDetailsFetcher, skuPurchaser, availabilityChecker);
+        GoogleSkuPurchaser googleSkuPurchaser = new GoogleSkuPurchaser(billingClientSupplier);
+        return new GoogleBillingr(billingClientSupplier,
+                new GooglePurchaseFetcher(billingClientSupplier),
+                new GoogleSkuDetailsFetcher(billingClientSupplier),
+                analyticsEnabled ? new AnalyticsSkuPurchaser(googleSkuPurchaser) : googleSkuPurchaser,
+                new GoogleBillingAvailabilityChecker(billingClientSupplier),
+                new GooglePurchaseConsumer(billingClientSupplier),
+                new GooglePurchaseAcknowledger(billingClientSupplier));
     }
 }

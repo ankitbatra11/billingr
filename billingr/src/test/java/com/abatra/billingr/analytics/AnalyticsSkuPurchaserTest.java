@@ -1,7 +1,6 @@
 package com.abatra.billingr.analytics;
 
 import android.app.Activity;
-import android.os.Build;
 
 import com.abatra.android.wheelie.chronicle.Chronicle;
 import com.abatra.android.wheelie.chronicle.model.BeginCheckoutEventParams;
@@ -26,8 +25,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.MockitoAnnotations;
-import org.robolectric.RobolectricTestRunner;
-import org.robolectric.annotation.Config;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
 
@@ -42,8 +40,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith(RobolectricTestRunner.class)
-@Config(sdk = Build.VERSION_CODES.P)
+@RunWith(MockitoJUnitRunner.class)
 public class AnalyticsSkuPurchaserTest {
 
     private static final String SKU_ID = "skuId";
@@ -86,8 +83,6 @@ public class AnalyticsSkuPurchaserTest {
 
     @Before
     public void setup() {
-
-        MockitoAnnotations.openMocks(this);
 
         doAnswer(invocation ->
         {

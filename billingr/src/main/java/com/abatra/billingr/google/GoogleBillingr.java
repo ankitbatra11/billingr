@@ -1,18 +1,17 @@
 package com.abatra.billingr.google;
 
-import android.app.Activity;
-
 import com.abatra.android.wheelie.java8.Consumer;
 import com.abatra.android.wheelie.lifecycle.ILifecycleOwner;
 import com.abatra.billingr.BillingAvailabilityChecker;
 import com.abatra.billingr.Billingr;
+import com.abatra.billingr.purchase.PurchaseAcknowledger;
+import com.abatra.billingr.purchase.PurchaseConsumer;
 import com.abatra.billingr.purchase.PurchaseFetcher;
 import com.abatra.billingr.purchase.PurchaseListener;
 import com.abatra.billingr.purchase.PurchaseSkuRequest;
-import com.abatra.billingr.purchase.PurchasesProcessor;
-import com.abatra.billingr.sku.SkuDetailsFetcher;
+import com.abatra.billingr.purchase.SkuPurchase;
 import com.abatra.billingr.purchase.SkuPurchaser;
-import com.abatra.billingr.sku.Sku;
+import com.abatra.billingr.sku.SkuDetailsFetcher;
 
 import java.util.List;
 
@@ -23,17 +22,23 @@ public class GoogleBillingr implements Billingr {
     final SkuDetailsFetcher skuDetailsFetcher;
     final SkuPurchaser skuPurchaser;
     final BillingAvailabilityChecker availabilityChecker;
+    final PurchaseConsumer purchaseConsumer;
+    final PurchaseAcknowledger purchaseAcknowledger;
 
     public GoogleBillingr(InitializedBillingClientSupplier billingClientSupplier,
                           PurchaseFetcher purchaseFetcher,
                           SkuDetailsFetcher skuDetailsFetcher,
                           SkuPurchaser skuPurchaser,
-                          BillingAvailabilityChecker availabilityChecker) {
+                          BillingAvailabilityChecker availabilityChecker,
+                          PurchaseConsumer purchaseConsumer,
+                          PurchaseAcknowledger purchaseAcknowledger) {
         this.billingClientSupplier = billingClientSupplier;
         this.purchaseFetcher = purchaseFetcher;
         this.skuDetailsFetcher = skuDetailsFetcher;
         this.skuPurchaser = skuPurchaser;
         this.availabilityChecker = availabilityChecker;
+        this.purchaseConsumer = purchaseConsumer;
+        this.purchaseAcknowledger = purchaseAcknowledger;
     }
 
     @Override
@@ -76,22 +81,22 @@ public class GoogleBillingr implements Billingr {
     }
 
     @Override
-    public void launchPurchaseFlow(Sku sku, Activity activity, SkuPurchaser.Listener listener) {
-        skuPurchaser.launchPurchaseFlow(sku, activity, listener);
-    }
-
-    @Override
     public void launchPurchaseFlow(PurchaseSkuRequest purchaseSkuRequest) {
         skuPurchaser.launchPurchaseFlow(purchaseSkuRequest);
     }
 
     @Override
-    public void setPurchasesProcessor(PurchasesProcessor purchasesProcessor) {
-        purchaseFetcher.setPurchasesProcessor(purchasesProcessor);
+    public void checkBillingAvailability(BillingAvailabilityChecker.Callback callback) {
+        availabilityChecker.checkBillingAvailability(callback);
     }
 
     @Override
-    public void checkBillingAvailability(Callback callback) {
-        availabilityChecker.checkBillingAvailability(callback);
+    public void acknowledgePurchase(SkuPurchase skuPurchase, PurchaseAcknowledger.Callback callback) {
+        purchaseAcknowledger.acknowledgePurchase(skuPurchase, callback);
+    }
+
+    @Override
+    public void consumePurchase(SkuPurchase skuPurchase, PurchaseConsumer.Callback callback) {
+        purchaseConsumer.consumePurchase(skuPurchase, callback);
     }
 }

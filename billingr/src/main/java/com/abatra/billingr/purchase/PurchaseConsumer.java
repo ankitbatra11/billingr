@@ -22,17 +22,14 @@ public interface PurchaseConsumer extends ILifecycleObserver {
 
         @Override
         default void onPurchaseConsumed() {
-
         }
 
         @Override
         default void onPurchaseConsumeFailed(BillingrException billingrException) {
-
         }
 
         @Override
         default void onBillingUnavailable() {
-
         }
     }
 }
