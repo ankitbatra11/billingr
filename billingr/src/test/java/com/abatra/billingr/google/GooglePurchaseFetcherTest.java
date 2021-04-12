@@ -3,7 +3,6 @@ package com.abatra.billingr.google;
 import com.abatra.android.wheelie.lifecycle.ILifecycleOwner;
 import com.abatra.billingr.BillingrException;
 import com.abatra.billingr.purchase.PurchaseListener;
-import com.abatra.billingr.purchase.PurchasesProcessor;
 import com.abatra.billingr.purchase.SkuPurchase;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingResult;
@@ -18,7 +17,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -33,13 +31,9 @@ import static com.android.billingclient.api.BillingClient.BillingResponseCode.ER
 import static com.android.billingclient.api.BillingClient.BillingResponseCode.OK;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasSize
-        ;
-import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -63,9 +57,6 @@ public class GooglePurchaseFetcherTest {
 
     @Mock
     private Purchase.PurchasesResult mockedPurchasesResult;
-
-    @Mock
-    private PurchasesProcessor mockedPurchasesProcessor;
 
     @Captor
     private ArgumentCaptor<List<SkuPurchase>> skuPurchasesArgumentCaptor;
@@ -163,65 +154,12 @@ public class GooglePurchaseFetcherTest {
     }
 
     @Test
-    public void test_fetchInAppPurchases_billingClientInitialized_billingResultOk_havePurchases_processPurchasesCallFailed() {
-
-        BillingResult billingResult = mockBillingResult(OK);
-        when(mockedPurchasesResult.getBillingResult()).thenReturn(billingResult);
-        when(mockedBillingClient.queryPurchases(any())).thenReturn(mockedPurchasesResult);
-        when(mockedPurchasesResult.getPurchasesList()).thenReturn(Collections.singletonList(mock(Purchase.class)));
-
-        RuntimeException runtimeException = new RuntimeException();
-        doThrow(runtimeException).when(mockedPurchasesProcessor).processPurchases(any(), any());
-        googlePurchaseFetcher.setPurchasesProcessor(mockedPurchasesProcessor);
-
-        googlePurchaseFetcher.fetchInAppPurchases(mockedPurchaseListener);
-
-        verify(mockedPurchaseListener, times(1)).onPurchasesLoadFailed(billingrExceptionArgumentCaptor.capture());
-        assertThat(billingrExceptionArgumentCaptor.getAllValues(), hasSize(1));
-        assertThat(billingrExceptionArgumentCaptor.getValue().getCause(), sameInstance(runtimeException));
-    }
-
-    @Test
-    public void test_fetchInAppPurchases_billingClientInitialized_billingResultOk_havePurchases_processFailsProcessPassForPurchases() {
-
-        BillingResult billingResult = mockBillingResult(OK);
-        when(mockedPurchasesResult.getBillingResult()).thenReturn(billingResult);
-        when(mockedBillingClient.queryPurchases(any())).thenReturn(mockedPurchasesResult);
-
-        Purchase expectedPurchase = mock(Purchase.class);
-        when(mockedPurchasesResult.getPurchasesList()).thenReturn(Arrays.asList(expectedPurchase, mock(Purchase.class)));
-
-        doAnswer(invocation ->
-        {
-            List<SkuPurchase> skuPurchases = invocation.getArgument(0);
-            PurchasesProcessor.Listener listener = invocation.getArgument(1);
-            listener.onProcessed(skuPurchases.get(0));
-            listener.onProcessingFailed(unavailable());
-            return null;
-
-        }).when(mockedPurchasesProcessor).processPurchases(any(), any());
-        googlePurchaseFetcher.setPurchasesProcessor(mockedPurchasesProcessor);
-
-        googlePurchaseFetcher.fetchInAppPurchases(mockedPurchaseListener);
-
-        verify(mockedPurchaseListener, times(1)).onPurchasesLoaded(skuPurchasesArgumentCaptor.capture());
-        assertThat(skuPurchasesArgumentCaptor.getAllValues(), hasSize(1));
-        assertThat(skuPurchasesArgumentCaptor.getValue(), hasSize(1));
-        assertThat(skuPurchasesArgumentCaptor.getValue().get(0), instanceOf(GoogleSkuPurchase.class));
-        GoogleSkuPurchase googleSkuPurchase = (GoogleSkuPurchase) skuPurchasesArgumentCaptor.getValue().get(0);
-        assertThat(googleSkuPurchase.getPurchase(), sameInstance(expectedPurchase));
-    }
-
-    @Test
     public void test_observeLifecycle() {
 
         ILifecycleOwner lifecycleOwner = mock(ILifecycleOwner.class);
-        googlePurchaseFetcher.setPurchasesProcessor(mockedPurchasesProcessor);
 
         googlePurchaseFetcher.observeLifecycle(lifecycleOwner);
 
         verify(googlePurchaseFetcher.billingClientSupplier, times(1)).observeLifecycle(lifecycleOwner);
-        verify(mockedPurchasesProcessor, times(1)).observeLifecycle(lifecycleOwner);
-
     }
 }
