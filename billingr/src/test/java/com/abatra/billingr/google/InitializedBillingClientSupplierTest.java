@@ -1,7 +1,5 @@
 package com.abatra.billingr.google;
 
-import android.os.Build;
-
 import com.abatra.billingr.purchase.PurchaseListener;
 import com.abatra.billingr.purchase.SkuPurchase;
 import com.android.billingclient.api.BillingClient;
@@ -17,9 +15,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.robolectric.RobolectricTestRunner;
-import org.robolectric.annotation.Config;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -40,12 +36,12 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-@RunWith(RobolectricTestRunner.class)
-@Config(sdk = Build.VERSION_CODES.P)
+@RunWith(MockitoJUnitRunner.class)
 public class InitializedBillingClientSupplierTest {
 
     public static final String SKU = "sku";
     public static final String DISCOUNTED_SKU = "discountedSku";
+
     @Mock
     private BillingClientFactory mockedBillingClientFactory;
 
@@ -78,7 +74,6 @@ public class InitializedBillingClientSupplierTest {
 
     @Before
     public void setup() {
-        MockitoAnnotations.openMocks(this);
         when(mockedBillingClientFactory.createPendingPurchasesEnabledBillingClient(any(PurchasesUpdatedListener.class)))
                 .thenReturn(mockedBillingClient);
     }
