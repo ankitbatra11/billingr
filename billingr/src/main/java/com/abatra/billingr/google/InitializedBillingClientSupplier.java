@@ -6,10 +6,10 @@ import androidx.annotation.Nullable;
 import com.abatra.android.wheelie.java8.Consumer;
 import com.abatra.android.wheelie.lifecycle.LifecycleObserverObservable;
 import com.abatra.android.wheelie.pattern.Observable;
-import com.abatra.billingr.BillingAvailabilityCallback;
+import com.abatra.billingr.BillingUnavailableCallback;
 import com.abatra.billingr.BillingrException;
-import com.abatra.billingr.PurchaseListener;
-import com.abatra.billingr.SkuPurchase;
+import com.abatra.billingr.purchase.PurchaseListener;
+import com.abatra.billingr.purchase.SkuPurchase;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingResult;
@@ -35,7 +35,7 @@ public class InitializedBillingClientSupplier implements LifecycleObserverObserv
 
     @Nullable
     private Listener listener;
-    private final Observable<com.abatra.billingr.PurchaseListener> purchaseListeners = Observable.hashSet();
+    private final Observable<com.abatra.billingr.purchase.PurchaseListener> purchaseListeners = Observable.hashSet();
 
     @Nullable
     BillingClient billingClient;
@@ -45,17 +45,17 @@ public class InitializedBillingClientSupplier implements LifecycleObserverObserv
     }
 
     @Override
-    public void addObserver(com.abatra.billingr.PurchaseListener observer) {
+    public void addObserver(com.abatra.billingr.purchase.PurchaseListener observer) {
         purchaseListeners.addObserver(observer);
     }
 
     @Override
-    public void removeObserver(com.abatra.billingr.PurchaseListener observer) {
+    public void removeObserver(com.abatra.billingr.purchase.PurchaseListener observer) {
         purchaseListeners.addObserver(observer);
     }
 
     @Override
-    public void forEachObserver(Consumer<com.abatra.billingr.PurchaseListener> observerConsumer) {
+    public void forEachObserver(Consumer<com.abatra.billingr.purchase.PurchaseListener> observerConsumer) {
         purchaseListeners.forEachObserver(observerConsumer);
     }
 
@@ -108,7 +108,7 @@ public class InitializedBillingClientSupplier implements LifecycleObserverObserv
         if (GoogleBillingUtils.isOk(billingResult)) {
             getListener().ifPresent(l -> l.initialized(billingClient));
         } else if (GoogleBillingUtils.isUnavailable(billingResult)) {
-            getListener().ifPresent(BillingAvailabilityCallback::onBillingUnavailable);
+            getListener().ifPresent(Listener::onBillingUnavailable);
         } else {
             Timber.w("unexpected billingResult=%s from onBillingSetupFinished",
                     GoogleBillingUtils.toString(billingResult));
@@ -150,7 +150,7 @@ public class InitializedBillingClientSupplier implements LifecycleObserverObserv
                 if (skuPurchases.isEmpty()) {
                     Timber.i("purchase list is empty");
                 } else {
-                    forEachObserver(purchaseListener -> purchaseListener.updated(skuPurchases));
+                    forEachObserver(purchaseListener -> purchaseListener.onPurchasesLoaded(skuPurchases));
                 }
             } else {
                 Timber.w("billing result is OK purchase list is null");
@@ -207,12 +207,10 @@ public class InitializedBillingClientSupplier implements LifecycleObserverObserv
         }
     }
 
-    public interface Listener extends BillingAvailabilityCallback {
+    public interface Listener extends BillingUnavailableCallback {
 
-        default void initialized(BillingClient billingClient) {
-        }
+        void initialized(BillingClient billingClient);
 
-        default void initializationFailed(BillingrException billingrException) {
-        }
+        void initializationFailed(BillingrException billingrException);
     }
 }

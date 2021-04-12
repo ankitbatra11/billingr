@@ -1,7 +1,9 @@
 package com.abatra.billingr.google;
 
-import com.abatra.billingr.SkuPurchase;
+import com.abatra.billingr.purchase.SkuPurchase;
 import com.android.billingclient.api.Purchase;
+
+import static com.abatra.billingr.google.GoogleBillingUtils.*;
 
 public class GoogleSkuPurchase implements SkuPurchase {
 
@@ -19,5 +21,14 @@ public class GoogleSkuPurchase implements SkuPurchase {
     @Override
     public String getPurchaseToken() {
         return purchase.getPurchaseToken();
+    }
+
+    @Override
+    public boolean isAcknowledgedPurchased() {
+        return purchase.isAcknowledged() && isPurchased(purchase);
+    }
+
+    public Purchase getPurchase() {
+        return purchase;
     }
 }

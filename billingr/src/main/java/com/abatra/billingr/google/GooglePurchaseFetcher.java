@@ -1,62 +1,73 @@
 package com.abatra.billingr.google;
 
-import com.abatra.billingr.PurchaseFetcher;
-import com.abatra.billingr.PurchaseListener;
-import com.abatra.billingr.SkuPurchase;
+import com.abatra.android.wheelie.lifecycle.ILifecycleOwner;
 import com.abatra.billingr.BillingrException;
-import com.android.billingclient.api.AcknowledgePurchaseParams;
+import com.abatra.billingr.purchase.ProcessLessPurchasesProcessor;
+import com.abatra.billingr.purchase.PurchaseFetcher;
+import com.abatra.billingr.purchase.PurchaseListener;
+import com.abatra.billingr.purchase.PurchasesProcessor;
+import com.abatra.billingr.purchase.SkuPurchase;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.Purchase;
 
-import java.util.ArrayList;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
 
 import timber.log.Timber;
 
+import static com.android.billingclient.api.Purchase.PurchasesResult;
+
 public class GooglePurchaseFetcher implements PurchaseFetcher {
 
-    private final InitializedBillingClientSupplier billingClientSupplier;
+    final InitializedBillingClientSupplier billingClientSupplier;
+    private PurchasesProcessor purchasesProcessor = ProcessLessPurchasesProcessor.INSTANCE;
 
     public GooglePurchaseFetcher(InitializedBillingClientSupplier billingClientSupplier) {
         this.billingClientSupplier = billingClientSupplier;
     }
 
     @Override
+    public void setPurchasesProcessor(PurchasesProcessor purchasesProcessor) {
+        this.purchasesProcessor = purchasesProcessor;
+    }
+
+    @Override
+    public void observeLifecycle(ILifecycleOwner lifecycleOwner) {
+        billingClientSupplier.observeLifecycle(lifecycleOwner);
+        purchasesProcessor.observeLifecycle(lifecycleOwner);
+    }
+
+    @Override
     public void fetchInAppPurchases(PurchaseListener listener) {
+        try {
+            tryGettingInitializedBillingClient(listener);
+        } catch (Throwable error) {
+            Timber.e(error);
+            listener.onPurchasesLoadFailed(new BillingrException(error));
+        }
+    }
+
+    private void tryGettingInitializedBillingClient(PurchaseListener listener) {
         billingClientSupplier.getInitializedBillingClient(new InitializedBillingClientSupplier.Listener() {
 
             @Override
             public void initialized(BillingClient billingClient) {
-                Purchase.PurchasesResult purchasesResult = billingClient.queryPurchases(BillingClient.SkuType.INAPP);
-                if (GoogleBillingUtils.isOk(purchasesResult.getBillingResult())) {
-                    List<SkuPurchase> skuPurchases = new ArrayList<>();
-                    if (purchasesResult.getPurchasesList() != null) {
-                        for (Purchase purchase : purchasesResult.getPurchasesList()) {
-                            if (!purchase.isAcknowledged()) {
-                                try {
-                                    tryAcknowledgingPurchase(billingClient, purchase);
-                                } catch (Exception e) {
-                                    Timber.e(e, "tryAcknowledgingPurchase failed for sku=%s", purchase.getSku());
-                                }
-                            }
-                            if (GoogleBillingUtils.isPurchased(purchase)) {
-                                skuPurchases.add(new GoogleSkuPurchase(purchase));
-                            }
-                        }
-                    }
-                    listener.updated(skuPurchases);
-                } else {
-
-                    Timber.w("unexpected billing result=%s from inApp query purchases",
-                            GoogleBillingUtils.toString(purchasesResult.getBillingResult()));
-
-                    listener.loadingPurchasesFailed(GoogleBillingrException.from(purchasesResult.getBillingResult()));
+                try {
+                    queryPurchases(billingClient, listener);
+                } catch (Throwable error) {
+                    Timber.e(error);
+                    listener.onPurchasesLoadFailed(new BillingrException(error));
                 }
             }
 
             @Override
             public void initializationFailed(BillingrException billingrException) {
-                listener.loadingPurchasesFailed(billingrException);
+                listener.onPurchasesLoadFailed(billingrException);
             }
 
             @Override
@@ -66,17 +77,49 @@ public class GooglePurchaseFetcher implements PurchaseFetcher {
         });
     }
 
-    private void tryAcknowledgingPurchase(BillingClient billingClient, Purchase purchase) {
+    private void queryPurchases(BillingClient billingClient, PurchaseListener listener) throws InterruptedException {
+        PurchasesResult purchasesResult = billingClient.queryPurchases(BillingClient.SkuType.INAPP);
+        if (GoogleBillingUtils.isOk(purchasesResult.getBillingResult())) {
+            List<Purchase> purchases = getPurchases(purchasesResult);
+            if (purchases.isEmpty()) {
+                listener.onPurchasesLoaded(Collections.emptyList());
+            } else {
+                processPurchases(listener, purchases);
+            }
+        } else {
 
-        AcknowledgePurchaseParams acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
-                .setPurchaseToken(purchase.getPurchaseToken())
-                .build();
+            Timber.w("unexpected billing result=%s from inApp query purchases",
+                    GoogleBillingUtils.toString(purchasesResult.getBillingResult()));
 
-        billingClient.acknowledgePurchase(acknowledgePurchaseParams, result -> {
-            if (!GoogleBillingUtils.isOk(result)) {
-                Timber.w("unexpected billing result=%s from acknowledgePurchase for sku=%s",
-                        GoogleBillingUtils.toString(result), purchase.getSku());
+            listener.onPurchasesLoadFailed(GoogleBillingrException.from(purchasesResult.getBillingResult()));
+        }
+    }
+
+    private void processPurchases(PurchaseListener listener, List<Purchase> purchases) throws InterruptedException {
+        List<SkuPurchase> skuPurchases = new CopyOnWriteArrayList<>();
+        CountDownLatch countDownLatch = new CountDownLatch(purchases.size());
+        purchasesProcessor.processPurchases(GoogleBillingUtils.toSkuPurchases(purchases), new PurchasesProcessor.Listener() {
+
+            @Override
+            public void onProcessed(SkuPurchase skuPurchase) {
+                try {
+                    skuPurchases.add(skuPurchase);
+                } finally {
+                    countDownLatch.countDown();
+                }
+            }
+
+            @Override
+            public void onProcessingFailed(BillingrException billingrException) {
+                countDownLatch.countDown();
             }
         });
+        countDownLatch.await();
+        listener.onPurchasesLoaded(skuPurchases);
+    }
+
+    @NotNull
+    private List<Purchase> getPurchases(PurchasesResult purchasesResult) {
+        return Optional.ofNullable(purchasesResult.getPurchasesList()).orElse(Collections.emptyList());
     }
 }

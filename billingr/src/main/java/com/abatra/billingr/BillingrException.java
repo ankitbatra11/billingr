@@ -1,6 +1,8 @@
 package com.abatra.billingr;
 
-abstract public class BillingrException extends RuntimeException {
+public class BillingrException extends RuntimeException {
+
+    public static final BillingrException UNAVAILABLE = new BillingrException("Billing is unavailable!");
 
     public BillingrException(String message) {
         super(message);
@@ -8,5 +10,9 @@ abstract public class BillingrException extends RuntimeException {
 
     public BillingrException(Throwable cause) {
         super(cause);
+    }
+
+    public static BillingrException unavailable() {
+        return UNAVAILABLE;
     }
 }
