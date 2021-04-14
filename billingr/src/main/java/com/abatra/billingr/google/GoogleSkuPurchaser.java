@@ -58,7 +58,7 @@ public class GoogleSkuPurchaser implements SkuPurchaser {
     }
 
     private void onPurchaseFlowLaunchFailed(PurchaseSkuRequest purchaseSkuRequest, Throwable error) {
-        purchaseSkuRequest.getListener().ifPresent(l -> l.onPurchaseFlowLaunchFailed(new BillingrException(error)));
+        purchaseSkuRequest.getListener().ifPresent(l -> l.onPurchaseFlowLaunchFailed(new GoogleBillingrException(error)));
     }
 
     private void tryGettingInitializedBillingClient(PurchaseSkuRequest purchaseSkuRequest) {

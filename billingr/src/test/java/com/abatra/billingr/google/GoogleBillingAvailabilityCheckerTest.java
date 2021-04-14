@@ -10,6 +10,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import static com.abatra.billingr.google.GoogleBillingrException.*;
 import static com.abatra.billingr.google.InitializedBillingClientSupplierMocker.mockInitializationFailure;
 import static com.abatra.billingr.google.InitializedBillingClientSupplierMocker.mockInitialized;
 import static com.abatra.billingr.google.InitializedBillingClientSupplierMocker.mockUnavailable;
@@ -42,12 +43,12 @@ public class GoogleBillingAvailabilityCheckerTest {
 
     @Test
     public void test_error() {
-        BillingrException error = BillingrException.unavailable();
+        BillingrException error = unavailable();
         availabilityChecker = new GoogleBillingAvailabilityChecker(mockInitializationFailure(error));
 
         availabilityChecker.checkBillingAvailability(mockedCallback);
 
-        verify(mockedCallback, times(1)).onBillingAvailabilityCheckFailed(BillingrException.unavailable());
+        verify(mockedCallback, times(1)).onBillingAvailabilityCheckFailed(unavailable());
     }
 
     @Test

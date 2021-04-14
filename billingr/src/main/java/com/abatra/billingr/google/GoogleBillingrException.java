@@ -3,7 +3,9 @@ package com.abatra.billingr.google;
 import com.abatra.billingr.BillingrException;
 import com.android.billingclient.api.BillingResult;
 
-class GoogleBillingrException extends BillingrException {
+public class GoogleBillingrException extends BillingrException {
+
+    public static final GoogleBillingrException UNAVAILABLE = new GoogleBillingrException("Billing is unavailable!");
 
     GoogleBillingrException(String message) {
         super(message);
@@ -15,5 +17,9 @@ class GoogleBillingrException extends BillingrException {
 
     static GoogleBillingrException from(BillingResult billingResult) {
         return new GoogleBillingrException(GoogleBillingUtils.toString(billingResult));
+    }
+
+    public static GoogleBillingrException unavailable() {
+        return UNAVAILABLE;
     }
 }

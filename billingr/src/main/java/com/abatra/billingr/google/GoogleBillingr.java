@@ -4,6 +4,10 @@ import com.abatra.android.wheelie.java8.Consumer;
 import com.abatra.android.wheelie.lifecycle.ILifecycleOwner;
 import com.abatra.billingr.BillingAvailabilityChecker;
 import com.abatra.billingr.Billingr;
+import com.abatra.billingr.purchase.AcknowledgePurchaseCallback;
+import com.abatra.billingr.purchase.AcknowledgePurchasesCallback;
+import com.abatra.billingr.purchase.ConsumePurchaseCallback;
+import com.abatra.billingr.purchase.ConsumePurchasesCallback;
 import com.abatra.billingr.purchase.PurchaseAcknowledger;
 import com.abatra.billingr.purchase.PurchaseConsumer;
 import com.abatra.billingr.purchase.PurchaseFetcher;
@@ -91,12 +95,22 @@ public class GoogleBillingr implements Billingr {
     }
 
     @Override
-    public void acknowledgePurchase(SkuPurchase skuPurchase, PurchaseAcknowledger.Callback callback) {
+    public void acknowledgePurchase(SkuPurchase skuPurchase, AcknowledgePurchaseCallback callback) {
         purchaseAcknowledger.acknowledgePurchase(skuPurchase, callback);
     }
 
     @Override
-    public void consumePurchase(SkuPurchase skuPurchase, PurchaseConsumer.Callback callback) {
+    public void consumePurchase(SkuPurchase skuPurchase, ConsumePurchaseCallback callback) {
         purchaseConsumer.consumePurchase(skuPurchase, callback);
+    }
+
+    @Override
+    public void consumePurchases(List<SkuPurchase> skuPurchases, ConsumePurchasesCallback callback) {
+        purchaseConsumer.consumePurchases(skuPurchases, callback);
+    }
+
+    @Override
+    public void acknowledgePurchases(List<SkuPurchase> skuPurchases, AcknowledgePurchasesCallback callback) {
+        purchaseAcknowledger.acknowledgePurchases(skuPurchases, callback);
     }
 }

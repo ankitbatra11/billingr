@@ -2,7 +2,9 @@ package com.abatra.billingr.google;
 
 import com.abatra.android.wheelie.lifecycle.ILifecycleOwner;
 import com.abatra.billingr.BillingrException;
-import com.abatra.billingr.purchase.PurchaseConsumer;
+import com.abatra.billingr.purchase.ConsumePurchaseCallback;
+import com.abatra.billingr.purchase.ConsumePurchasesCallback;
+import com.abatra.billingr.purchase.SkuPurchase;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.ConsumeResponseListener;
@@ -15,20 +17,26 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import static com.abatra.billingr.BillingrException.unavailable;
+import java.util.Arrays;
+
 import static com.abatra.billingr.google.BillingResultMocker.mockBillingResult;
+import static com.abatra.billingr.google.GoogleBillingrException.unavailable;
 import static com.abatra.billingr.google.InitializedBillingClientSupplierMocker.GET_ERROR;
 import static com.abatra.billingr.google.InitializedBillingClientSupplierMocker.mockGetClientFailure;
 import static com.abatra.billingr.google.InitializedBillingClientSupplierMocker.mockInitializationFailure;
 import static com.abatra.billingr.google.InitializedBillingClientSupplierMocker.mockInitialized;
 import static com.abatra.billingr.google.InitializedBillingClientSupplierMocker.mockUnavailable;
+import static com.android.billingclient.api.BillingClient.BillingResponseCode.ERROR;
+import static com.android.billingclient.api.BillingClient.BillingResponseCode.OK;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -47,13 +55,19 @@ public class GooglePurchaseConsumerTest {
     private InitializedBillingClientSupplier mockedBillingClientSupplier;
 
     @Mock
-    private PurchaseConsumer.Callback mockedCallback;
+    private ConsumePurchaseCallback mockedCallback;
 
     @Captor
     private ArgumentCaptor<BillingrException> billingrExceptionArgumentCaptor;
 
+    @Captor
+    private ArgumentCaptor<SkuPurchase> skuPurchaseArgumentCaptor;
+
     @Mock
     private GoogleSkuPurchase mockedGoogleSkuPurchase;
+
+    @Mock
+    private ConsumePurchasesCallback mockedConsumePurchasesCallback;
 
     @Before
     public void setup() {
@@ -76,7 +90,30 @@ public class GooglePurchaseConsumerTest {
 
         googlePurchaseConsumer.consumePurchase(null, mockedCallback);
 
-        verify(mockedCallback, times(1)).onPurchaseConsumeFailed(billingrExceptionArgumentCaptor.capture());
+        verify(mockedCallback, times(1)).onPurchaseConsumptionFailed(skuPurchaseArgumentCaptor.capture(),
+                billingrExceptionArgumentCaptor.capture());
+
+        verifySkuPurchase(null);
+
+        assertThat(billingrExceptionArgumentCaptor.getAllValues(), hasSize(1));
+        assertThat(billingrExceptionArgumentCaptor.getValue().getCause(), sameInstance(GET_ERROR));
+    }
+
+    private void verifySkuPurchase(SkuPurchase skuPurchase) {
+        assertThat(skuPurchaseArgumentCaptor.getAllValues(), hasSize(1));
+        assertThat(skuPurchaseArgumentCaptor.getValue(), sameInstance(skuPurchase));
+    }
+
+    @Test
+    public void test_consumePurchases_gettingBillingClientThrowsError() {
+
+        googlePurchaseConsumer = new GooglePurchaseConsumer(mockGetClientFailure());
+
+        googlePurchaseConsumer.consumePurchases(null, mockedConsumePurchasesCallback);
+
+        verify(mockedConsumePurchasesCallback, times(1))
+                .onPurchasesConsumptionProcessFailure(billingrExceptionArgumentCaptor.capture());
+
         assertThat(billingrExceptionArgumentCaptor.getAllValues(), hasSize(1));
         assertThat(billingrExceptionArgumentCaptor.getValue().getCause(), sameInstance(GET_ERROR));
     }
@@ -92,14 +129,42 @@ public class GooglePurchaseConsumerTest {
     }
 
     @Test
+    public void test_consumePurchases_billingUnavailable() {
+
+        googlePurchaseConsumer = new GooglePurchaseConsumer(mockUnavailable());
+
+        googlePurchaseConsumer.consumePurchases(null, mockedConsumePurchasesCallback);
+
+        verify(mockedConsumePurchasesCallback, times(1)).onBillingUnavailable();
+    }
+
+    @Test
     public void test_consumePurchase_billingInitializationFailed() {
 
         googlePurchaseConsumer = new GooglePurchaseConsumer(mockInitializationFailure(unavailable()));
 
         googlePurchaseConsumer.consumePurchase(null, mockedCallback);
 
-        verify(mockedCallback, times(1)).onPurchaseConsumeFailed(billingrExceptionArgumentCaptor.capture());
-        assertThat(billingrExceptionArgumentCaptor.getValue().getCause(), sameInstance(unavailable()));
+        verify(mockedCallback, times(1)).onPurchaseConsumptionFailed(skuPurchaseArgumentCaptor.capture(),
+                billingrExceptionArgumentCaptor.capture());
+
+        verifySkuPurchase(null);
+
+        assertThat(billingrExceptionArgumentCaptor.getValue(), sameInstance(unavailable()));
+    }
+
+    @Test
+    public void test_consumePurchases_billingInitializationFailed() {
+
+        googlePurchaseConsumer = new GooglePurchaseConsumer(mockInitializationFailure(unavailable()));
+
+        googlePurchaseConsumer.consumePurchases(null, mockedConsumePurchasesCallback);
+
+        verify(mockedConsumePurchasesCallback, times(1))
+                .onPurchasesConsumptionProcessFailure(billingrExceptionArgumentCaptor.capture());
+
+        assertThat(billingrExceptionArgumentCaptor.getAllValues(), hasSize(1));
+        assertThat(billingrExceptionArgumentCaptor.getValue(), sameInstance(unavailable()));
     }
 
     @Test
@@ -107,7 +172,10 @@ public class GooglePurchaseConsumerTest {
 
         googlePurchaseConsumer.consumePurchase(mockedGoogleSkuPurchase, mockedCallback);
 
-        verify(mockedCallback, times(1)).onPurchaseConsumeFailed(billingrExceptionArgumentCaptor.capture());
+        verify(mockedCallback, times(1)).onPurchaseConsumptionFailed(skuPurchaseArgumentCaptor.capture(), billingrExceptionArgumentCaptor.capture());
+
+        verifySkuPurchase(mockedGoogleSkuPurchase);
+
         assertThat(billingrExceptionArgumentCaptor.getAllValues(), hasSize(1));
         assertThat(billingrExceptionArgumentCaptor.getValue().getCause(), notNullValue());
         assertThat(billingrExceptionArgumentCaptor.getValue().getCause().getMessage(), equalTo("Purchase token must be set"));
@@ -116,25 +184,35 @@ public class GooglePurchaseConsumerTest {
     @Test
     public void test_consumePurchase_initialized_consumeAsyncReturnsOk() {
 
-        doAnswer(invocation ->
-        {
-            ConsumeResponseListener listener = invocation.getArgument(1);
-            listener.onConsumeResponse(mockBillingResult(BillingClient.BillingResponseCode.OK), "some token");
-            return null;
 
-        }).when(mockedBillingClient).consumeAsync(any(), any());
-
-        when(mockedGoogleSkuPurchase.getPurchaseToken()).thenReturn("some token");
+        mockPurchaseTokenBillingResponseCode(OK);
 
         googlePurchaseConsumer.consumePurchase(mockedGoogleSkuPurchase, mockedCallback);
 
-        verify(mockedCallback, times(1)).onPurchaseConsumed();
+        verify(mockedCallback, times(1)).onPurchaseConsumed(mockedGoogleSkuPurchase);
     }
 
     @Test
     public void test_consumePurchase_initialized_consumeAsyncReturnsNotOk() {
 
-        BillingResult billingResult = mockBillingResult(BillingClient.BillingResponseCode.ERROR);
+        BillingResult billingResult = mockPurchaseTokenBillingResponseCode(ERROR);
+
+        googlePurchaseConsumer.consumePurchase(mockedGoogleSkuPurchase, mockedCallback);
+
+        verify(mockedCallback, times(1)).onPurchaseConsumptionFailed(skuPurchaseArgumentCaptor.capture(),
+                billingrExceptionArgumentCaptor.capture());
+
+        verifySkuPurchase(mockedGoogleSkuPurchase);
+
+        assertThat(billingrExceptionArgumentCaptor.getAllValues(), hasSize(1));
+        assertThat(billingrExceptionArgumentCaptor.getValue().getMessage(), equalTo(GoogleBillingUtils.toString(billingResult)));
+    }
+
+    private BillingResult mockPurchaseTokenBillingResponseCode(int responseCode) {
+
+        when(mockedGoogleSkuPurchase.getPurchaseToken()).thenReturn("some token");
+
+        BillingResult billingResult = mockBillingResult(responseCode);
         doAnswer(invocation ->
         {
             ConsumeResponseListener listener = invocation.getArgument(1);
@@ -142,14 +220,21 @@ public class GooglePurchaseConsumerTest {
             return null;
 
         }).when(mockedBillingClient).consumeAsync(any(), any());
+        return billingResult;
+    }
 
-        when(mockedGoogleSkuPurchase.getPurchaseToken()).thenReturn("some token");
+    @Test
+    public void test_consumePurchases_initialized_onePurchaseConsumedOnePurchaseConsumeFailed() {
 
-        googlePurchaseConsumer.consumePurchase(mockedGoogleSkuPurchase, mockedCallback);
+        mockPurchaseTokenBillingResponseCode(OK);
+        GoogleSkuPurchase googleSkuPurchase = mock(GoogleSkuPurchase.class);
 
-        verify(mockedCallback, times(1)).onPurchaseConsumeFailed(billingrExceptionArgumentCaptor.capture());
-        assertThat(billingrExceptionArgumentCaptor.getAllValues(), hasSize(1));
-        assertThat(billingrExceptionArgumentCaptor.getValue().getMessage(), equalTo(GoogleBillingUtils.toString(billingResult)));
+        googlePurchaseConsumer.consumePurchases(Arrays.asList(mockedGoogleSkuPurchase, googleSkuPurchase), mockedConsumePurchasesCallback);
+
+        verify(mockedConsumePurchasesCallback, times(1)).onPurchaseConsumed(mockedGoogleSkuPurchase);
+        verify(mockedConsumePurchasesCallback, times(1)).onPurchaseConsumptionFailed(same(googleSkuPurchase),
+                any(GoogleBillingrException.class));
+
     }
 
 }

@@ -2,7 +2,9 @@ package com.abatra.billingr.google;
 
 import com.abatra.android.wheelie.lifecycle.ILifecycleOwner;
 import com.abatra.billingr.BillingrException;
-import com.abatra.billingr.purchase.PurchaseAcknowledger;
+import com.abatra.billingr.purchase.AcknowledgePurchaseCallback;
+import com.abatra.billingr.purchase.AcknowledgePurchasesCallback;
+import com.abatra.billingr.purchase.SkuPurchase;
 import com.android.billingclient.api.AcknowledgePurchaseResponseListener;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingResult;
@@ -13,20 +15,24 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.Arrays;
+import java.util.Collections;
+
 import static com.abatra.billingr.google.BillingResultMocker.mockBillingResult;
-import static com.abatra.billingr.google.InitializedBillingClientSupplierMocker.GET_ERROR;
-import static com.abatra.billingr.google.InitializedBillingClientSupplierMocker.mockGetClientFailure;
 import static com.abatra.billingr.google.InitializedBillingClientSupplierMocker.mockInitializationFailure;
 import static com.abatra.billingr.google.InitializedBillingClientSupplierMocker.mockInitialized;
 import static com.abatra.billingr.google.InitializedBillingClientSupplierMocker.mockUnavailable;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -43,7 +49,7 @@ public class GooglePurchaseAcknowledgerTest {
     private BillingClient mockedBillingClient;
 
     @Mock
-    private PurchaseAcknowledger.Callback mockedCallback;
+    private AcknowledgePurchaseCallback mockedCallback;
 
     @Captor
     private ArgumentCaptor<BillingrException> billingrExceptionArgumentCaptor;
@@ -53,6 +59,12 @@ public class GooglePurchaseAcknowledgerTest {
 
     @Mock
     private Purchase mockedPurchase;
+
+    @Captor
+    private ArgumentCaptor<SkuPurchase> skuPurchaseArgumentCaptor;
+
+    @Mock
+    private AcknowledgePurchasesCallback mockedAcknowledgePurchasesCallback;
 
     @Before
     public void setup() {
@@ -70,17 +82,9 @@ public class GooglePurchaseAcknowledgerTest {
         }).when(mockedBillingClient).acknowledgePurchase(any(), any());
     }
 
-    @Test
-    public void test_acknowledgePurchase_getOnBillingClientFails() {
-
-
-        googlePurchaseAcknowledger = new GooglePurchaseAcknowledger(mockGetClientFailure());
-
-        googlePurchaseAcknowledger.acknowledgePurchase(null, mockedCallback);
-
-        verify(mockedCallback, times(1)).onPurchaseAcknowledgeFailed(billingrExceptionArgumentCaptor.capture());
-        assertThat(billingrExceptionArgumentCaptor.getAllValues(), hasSize(1));
-        assertThat(billingrExceptionArgumentCaptor.getValue().getCause(), sameInstance(GET_ERROR));
+    private void verifyCapturedSkuPurchase(SkuPurchase skuPurchase) {
+        assertThat(skuPurchaseArgumentCaptor.getAllValues(), hasSize(1));
+        assertThat(skuPurchaseArgumentCaptor.getValue(), sameInstance(skuPurchase));
     }
 
     @Test
@@ -94,15 +98,36 @@ public class GooglePurchaseAcknowledgerTest {
     }
 
     @Test
+    public void test_acknowledgePurchases_billingUnavailable() {
+
+        googlePurchaseAcknowledger = new GooglePurchaseAcknowledger(mockUnavailable());
+
+        googlePurchaseAcknowledger.acknowledgePurchases(Collections.emptyList(), mockedAcknowledgePurchasesCallback);
+
+        verify(mockedAcknowledgePurchasesCallback, times(1)).onBillingUnavailable();
+    }
+
+    @Test
     public void test_acknowledgePurchase_billingClientError() {
 
-        BillingrException error = new BillingrException("Simulate failure!");
+        BillingrException error = new GoogleBillingrException("Simulate failure!");
         googlePurchaseAcknowledger = new GooglePurchaseAcknowledger(mockInitializationFailure(error));
 
         googlePurchaseAcknowledger.acknowledgePurchase(null, mockedCallback);
 
-        verify(mockedCallback, times(1)).onPurchaseAcknowledgeFailed(error);
+        verify(mockedCallback, times(1)).onPurchaseAcknowledgeFailed(null, error);
 
+    }
+
+    @Test
+    public void test_acknowledgePurchases_billingClientError() {
+
+        BillingrException error = new GoogleBillingrException("Simulate failure!");
+        googlePurchaseAcknowledger = new GooglePurchaseAcknowledger(mockInitializationFailure(error));
+
+        googlePurchaseAcknowledger.acknowledgePurchases(Collections.emptyList(), mockedAcknowledgePurchasesCallback);
+
+        verify(mockedAcknowledgePurchasesCallback, times(1)).onPurchaseAcknowledgeProcessFailure(error);
     }
 
     @Test
@@ -112,7 +137,7 @@ public class GooglePurchaseAcknowledgerTest {
 
         googlePurchaseAcknowledger.acknowledgePurchase(mockedSkuPurchase, mockedCallback);
 
-        verify(mockedCallback, times(1)).onPurchaseAcknowledged();
+        verify(mockedCallback, times(1)).onPurchaseAcknowledged(mockedSkuPurchase);
     }
 
     @Test
@@ -123,7 +148,11 @@ public class GooglePurchaseAcknowledgerTest {
 
         googlePurchaseAcknowledger.acknowledgePurchase(mockedSkuPurchase, mockedCallback);
 
-        verify(mockedCallback, times(1)).onPurchaseAcknowledgeFailed(billingrExceptionArgumentCaptor.capture());
+        verify(mockedCallback, times(1)).onPurchaseAcknowledgeFailed(skuPurchaseArgumentCaptor.capture(),
+                billingrExceptionArgumentCaptor.capture());
+
+        verifyCapturedSkuPurchase(mockedSkuPurchase);
+
         assertThat(billingrExceptionArgumentCaptor.getAllValues(), hasSize(1));
         assertThat(billingrExceptionArgumentCaptor.getValue().getMessage(), Matchers.startsWith("Purchase"));
         assertThat(billingrExceptionArgumentCaptor.getValue().getMessage(), Matchers.endsWith("has not been purchased yet!"));
@@ -137,30 +166,31 @@ public class GooglePurchaseAcknowledgerTest {
 
         googlePurchaseAcknowledger.acknowledgePurchase(mockedSkuPurchase, mockedCallback);
 
-        verify(mockedCallback, times(1)).onPurchaseAcknowledgeFailed(billingrExceptionArgumentCaptor.capture());
+        verify(mockedCallback, times(1)).onPurchaseAcknowledgeFailed(skuPurchaseArgumentCaptor.capture(),
+                billingrExceptionArgumentCaptor.capture());
+
+        verifyCapturedSkuPurchase(mockedSkuPurchase);
+
         assertThat(billingrExceptionArgumentCaptor.getAllValues(), hasSize(1));
+        assertThat(billingrExceptionArgumentCaptor.getValue().getCause(), notNullValue());
         assertThat(billingrExceptionArgumentCaptor.getValue().getCause().getMessage(), equalTo("Purchase token must be set"));
     }
 
     @Test
     public void test_acknowledgePurchase_gotBillingClient_purchasePurchased_billingClientAckPurchaseReturnsOk() {
 
-        when(mockedPurchase.isAcknowledged()).thenReturn(false);
-        when(mockedPurchase.getPurchaseState()).thenReturn(Purchase.PurchaseState.PURCHASED);
-        when(mockedSkuPurchase.getPurchaseToken()).thenReturn("some token");
+        mockPurchasedState();
 
         googlePurchaseAcknowledger.acknowledgePurchase(mockedSkuPurchase, mockedCallback);
 
-        verify(mockedCallback, times(1)).onPurchaseAcknowledged();
+        verify(mockedCallback, times(1)).onPurchaseAcknowledged(mockedSkuPurchase);
 
     }
 
     @Test
     public void test_acknowledgePurchase_gotBillingClient_purchasePurchased_billingClientAckPurchaseReturnsNotOk() {
 
-        when(mockedPurchase.isAcknowledged()).thenReturn(false);
-        when(mockedPurchase.getPurchaseState()).thenReturn(Purchase.PurchaseState.PURCHASED);
-        when(mockedSkuPurchase.getPurchaseToken()).thenReturn("some token");
+        mockPurchasedState();
 
         BillingResult billingResult = mockBillingResult(BillingClient.BillingResponseCode.ERROR);
         doAnswer(invocation ->
@@ -173,10 +203,35 @@ public class GooglePurchaseAcknowledgerTest {
 
         googlePurchaseAcknowledger.acknowledgePurchase(mockedSkuPurchase, mockedCallback);
 
-        verify(mockedCallback, times(1)).onPurchaseAcknowledgeFailed(billingrExceptionArgumentCaptor.capture());
+        verify(mockedCallback, times(1)).onPurchaseAcknowledgeFailed(skuPurchaseArgumentCaptor.capture(),
+                billingrExceptionArgumentCaptor.capture());
+
+        verifyCapturedSkuPurchase(mockedSkuPurchase);
+
         assertThat(billingrExceptionArgumentCaptor.getAllValues(), hasSize(1));
         assertThat(billingrExceptionArgumentCaptor.getValue().getMessage(),
                 equalTo(GoogleBillingUtils.toString(billingResult)));
+    }
+
+    private void mockPurchasedState() {
+        when(mockedPurchase.isAcknowledged()).thenReturn(false);
+        when(mockedPurchase.getPurchaseState()).thenReturn(Purchase.PurchaseState.PURCHASED);
+        when(mockedSkuPurchase.getPurchaseToken()).thenReturn("some token");
+    }
+
+    @Test
+    public void test_acknowledgePurchases_onePurchaseAcknowledgedOnePurchaseAcknowledgementFails() {
+
+        mockPurchasedState();
+
+        SkuPurchase pendingSkuPurchase = mock(SkuPurchase.class);
+
+        googlePurchaseAcknowledger.acknowledgePurchases(Arrays.asList(mockedSkuPurchase, pendingSkuPurchase),
+                mockedAcknowledgePurchasesCallback);
+
+        verify(mockedAcknowledgePurchasesCallback, times(1)).onPurchaseAcknowledged(mockedSkuPurchase);
+        verify(mockedAcknowledgePurchasesCallback, times(1)).onPurchaseAcknowledgeFailed(same(pendingSkuPurchase),
+                any(BillingrException.class));
     }
 
     @Test
