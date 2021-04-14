@@ -68,10 +68,7 @@ public class InitializedBillingClientSupplierTest {
     private ArgumentCaptor<List<SkuPurchase>> skuPurchasesArgumentCaptor;
 
     @Mock
-    private PurchaseListener mockedPurchaseListenerFirst;
-
-    @Mock
-    private PurchaseListener mockedPurchaseListenerSecond;
+    private PurchaseListener mockedPurchaseListener;
 
     @Before
     public void setup() {
@@ -178,18 +175,15 @@ public class InitializedBillingClientSupplierTest {
         purchasesUpdatedListenerArgumentCaptor.getValue().onPurchasesUpdated(mockedBillingResult,
                 Arrays.asList(skuPurchase, discountedSkuPurchase));
 
-        verify(mockedPurchaseListenerFirst, times(1)).onPurchasesLoaded(skuPurchasesArgumentCaptor.capture());
-        verify(mockedPurchaseListenerSecond, times(1)).onPurchasesLoaded(skuPurchasesArgumentCaptor.capture());
+        verify(mockedPurchaseListener, times(1)).onPurchasesLoaded(skuPurchasesArgumentCaptor.capture());
 
-        assertThat(skuPurchasesArgumentCaptor.getAllValues(), hasSize(2));
+        assertThat(skuPurchasesArgumentCaptor.getAllValues(), hasSize(1));
         verifyUpdatedPurchases(skuPurchasesArgumentCaptor.getAllValues().get(0));
-        verifyUpdatedPurchases(skuPurchasesArgumentCaptor.getAllValues().get(1));
     }
 
     private void capturePurchasesUpdatedListener() {
 
-        initializedBillingClientSupplier.addObserver(mockedPurchaseListenerFirst);
-        initializedBillingClientSupplier.addObserver(mockedPurchaseListenerSecond);
+        initializedBillingClientSupplier.setPurchaseListener(mockedPurchaseListener);
 
         initializedBillingClientSupplier.getInitializedBillingClient(mockedListener);
 
@@ -221,7 +215,7 @@ public class InitializedBillingClientSupplierTest {
         when(mockedBillingResult.getResponseCode()).thenReturn(BillingClient.BillingResponseCode.OK);
         purchasesUpdatedListenerArgumentCaptor.getValue().onPurchasesUpdated(mockedBillingResult, null);
 
-        verifyNoInteractions(mockedPurchaseListenerFirst, mockedPurchaseListenerSecond);
+        verifyNoInteractions(mockedPurchaseListener);
     }
 
     @Test
@@ -232,7 +226,7 @@ public class InitializedBillingClientSupplierTest {
         when(mockedBillingResult.getResponseCode()).thenReturn(BillingClient.BillingResponseCode.OK);
         purchasesUpdatedListenerArgumentCaptor.getValue().onPurchasesUpdated(mockedBillingResult, Collections.emptyList());
 
-        verifyNoInteractions(mockedPurchaseListenerFirst, mockedPurchaseListenerSecond);
+        verifyNoInteractions(mockedPurchaseListener);
     }
 
     @Test
@@ -247,16 +241,14 @@ public class InitializedBillingClientSupplierTest {
         purchasesUpdatedListenerArgumentCaptor.getValue().onPurchasesUpdated(mockedBillingResult,
                 Arrays.asList(skuPurchase, discountedSkuPurchase));
 
-        verifyNoInteractions(mockedPurchaseListenerFirst, mockedPurchaseListenerSecond);
+        verifyNoInteractions(mockedPurchaseListener);
     }
 
     @Test
     public void test_onDestroy() {
 
-        initializedBillingClientSupplier.addObserver(mock(PurchaseListener.class));
-        initializedBillingClientSupplier.addObserver(mock(PurchaseListener.class));
+        initializedBillingClientSupplier.setPurchaseListener(mock(PurchaseListener.class));
         initializedBillingClientSupplier.getInitializedBillingClient(mockedListener);
-
         assertThat(initializedBillingClientSupplier.billingClient, notNullValue());
 
         initializedBillingClientSupplier.onDestroy();

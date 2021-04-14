@@ -9,7 +9,7 @@ import static com.abatra.billingr.google.GoogleBillingUtils.*;
 
 public class GoogleSkuPurchase implements SkuPurchase {
 
-    private final Purchase purchase;
+    final Purchase purchase;
 
     public GoogleSkuPurchase(Purchase purchase) {
         this.purchase = purchase;
@@ -26,12 +26,13 @@ public class GoogleSkuPurchase implements SkuPurchase {
     }
 
     @Override
-    public boolean isAcknowledgedPurchased() {
-        return purchase.isAcknowledged() && isPurchased(purchase);
+    public boolean isPurchased() {
+        return GoogleBillingUtils.isPurchased(purchase);
     }
 
-    public Purchase getPurchase() {
-        return purchase;
+    @Override
+    public boolean isAcknowledged() {
+        return purchase.isAcknowledged();
     }
 
     @NonNull

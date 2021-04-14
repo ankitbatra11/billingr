@@ -90,7 +90,7 @@ public class GooglePurchaseConsumer implements PurchaseConsumer {
 
     @Override
     public void consumePurchases(List<SkuPurchase> skuPurchases, ConsumePurchasesCallback callback) {
-        getBillingClient(callback::onPurchasesConsumptionProcessFailure, new InitializedBillingClientSupplier.Listener() {
+        getBillingClient(callback::onPurchasesConsumptionFailure, new InitializedBillingClientSupplier.Listener() {
 
             @Override
             public void initialized(BillingClient billingClient) {
@@ -99,7 +99,7 @@ public class GooglePurchaseConsumer implements PurchaseConsumer {
 
             @Override
             public void initializationFailed(BillingrException billingrException) {
-                callback.onPurchasesConsumptionProcessFailure(billingrException);
+                callback.onPurchasesConsumptionFailure(billingrException);
             }
 
             @Override

@@ -9,4 +9,5 @@ import com.abatra.billingr.sku.SkuDetailsFetcher;
 
 public interface Billingr extends ILifecycleObserver, SkuDetailsFetcher, PurchaseFetcher, SkuPurchaser,
         BillingAvailabilityChecker, PurchaseConsumer, PurchaseAcknowledger {
+    void fetchInAppPurchasesAndAck();
 }

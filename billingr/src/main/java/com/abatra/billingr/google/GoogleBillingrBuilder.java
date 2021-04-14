@@ -28,13 +28,14 @@ public class GoogleBillingrBuilder extends AbstractBillingrBuilder {
     protected Billingr build(boolean analyticsEnabled) {
         InitializedBillingClientSupplier billingClientSupplier = new InitializedBillingClientSupplier(createBillingClientFactoryMethod());
         GoogleSkuPurchaser googleSkuPurchaser = new GoogleSkuPurchaser(billingClientSupplier);
-        return new GoogleBillingr(billingClientSupplier,
+        return new GoogleBillingr(
                 new GooglePurchaseFetcher(billingClientSupplier),
                 new GoogleSkuDetailsFetcher(billingClientSupplier),
                 analyticsEnabled ? new AnalyticsSkuPurchaser(googleSkuPurchaser) : googleSkuPurchaser,
                 new GoogleBillingAvailabilityChecker(billingClientSupplier),
                 new GooglePurchaseConsumer(billingClientSupplier),
-                new GooglePurchaseAcknowledger(billingClientSupplier));
+                new GooglePurchaseAcknowledger(billingClientSupplier)
+        );
     }
 
     private Function<PurchasesUpdatedListener, BillingClient> createBillingClientFactoryMethod() {

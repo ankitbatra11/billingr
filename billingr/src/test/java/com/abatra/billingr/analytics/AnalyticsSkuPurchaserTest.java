@@ -5,7 +5,7 @@ import android.app.Activity;
 import com.abatra.android.wheelie.chronicle.Chronicle;
 import com.abatra.android.wheelie.chronicle.model.BeginCheckoutEventParams;
 import com.abatra.android.wheelie.chronicle.model.PurchaseEventParams;
-import com.abatra.android.wheelie.java8.Consumer;
+import com.abatra.android.wheelie.lifecycle.ILifecycleOwner;
 import com.abatra.billingr.BillingUnavailableCallback;
 import com.abatra.billingr.purchase.PurchaseListener;
 import com.abatra.billingr.purchase.PurchaseSkuRequest;
@@ -30,9 +30,11 @@ import java.util.Collections;
 import static com.abatra.billingr.google.GoogleBillingrException.unavailable;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -75,10 +77,10 @@ public class AnalyticsSkuPurchaserTest {
     @Mock
     private PurchaseListener mockedPurchaseListener;
 
-    @Mock
-    private Consumer<PurchaseListener> mockedPurchaseListenerConsumer;
-
     private PurchaseSkuRequest purchaseSkuRequest;
+
+    @Captor
+    private ArgumentCaptor<PurchaseListener> purchaseListenerArgumentCaptor;
 
     @Before
     public void setup() {
@@ -97,7 +99,7 @@ public class AnalyticsSkuPurchaserTest {
         when(mockedSku.getCurrency()).thenReturn(CURRENCY);
 
         when(mockedSkuPurchase.getSku()).thenReturn(SKU_ID);
-        when(mockedSkuPurchase.isAcknowledgedPurchased()).thenReturn(true);
+        when(mockedSkuPurchase.isPurchased()).thenReturn(true);
 
         chronicleMockedStatic = mockStatic(Chronicle.class);
 
@@ -130,11 +132,31 @@ public class AnalyticsSkuPurchaserTest {
     }
 
     @Test
-    public void test_updated() {
+    public void test_setPurchaseListener() {
+
+        analyticsSkuPurchaser.setPurchaseListener(mockedPurchaseListener);
+
+        verify(mockedSkuPurchaser, times(1)).setPurchaseListener(purchaseListenerArgumentCaptor.capture());
+        assertThat(purchaseListenerArgumentCaptor.getAllValues(), hasSize(1));
+
+        purchaseListenerArgumentCaptor.getValue().onBillingUnavailable();
+        verify(mockedPurchaseListener, times(1)).onBillingUnavailable();
+
+        purchaseListenerArgumentCaptor.getValue().onPurchasesLoaded(Collections.emptyList());
+        verify(mockedPurchaseListener, times(1)).onPurchasesLoaded(Collections.emptyList());
+
+        purchaseListenerArgumentCaptor.getValue().onPurchasesLoadFailed(unavailable());
+        verify(mockedPurchaseListener, times(1)).onPurchasesLoadFailed(unavailable());
+    }
+
+    @Test
+    public void test_purchasesLoaded() {
 
         analyticsSkuPurchaser.checkedOutSku = mockedSku;
+        analyticsSkuPurchaser.setPurchaseListener(mockedPurchaseListener);
+        verify(mockedSkuPurchaser, times(1)).setPurchaseListener(purchaseListenerArgumentCaptor.capture());
 
-        analyticsSkuPurchaser.onPurchasesLoaded(Collections.singletonList(mockedSkuPurchase));
+        purchaseListenerArgumentCaptor.getValue().onPurchasesLoaded(Collections.singletonList(mockedSkuPurchase));
 
         chronicleMockedStatic.verify(times(1), () -> Chronicle.recordPurchaseEvent(purchaseEventParamsArgumentCaptor.capture()));
         assertThat(purchaseEventParamsArgumentCaptor.getValue(), instanceOf(PurchaseEventParams.class));
@@ -151,40 +173,6 @@ public class AnalyticsSkuPurchaserTest {
 
         verify(mockedSkuPurchase, times(1)).getPurchaseToken();
         verify(mockedSkuPurchase, times(1)).getSku();
-    }
-
-    @Test
-    public void test_addObserver() {
-
-        analyticsSkuPurchaser.addObserver(mockedPurchaseListener);
-
-        verify(mockedSkuPurchaser, times(1)).addObserver(mockedPurchaseListener);
-    }
-
-    @Test
-    public void test_removeObserver() {
-
-        analyticsSkuPurchaser.removeObserver(mockedPurchaseListener);
-
-        verify(mockedSkuPurchaser, times(1)).removeObserver(mockedPurchaseListener);
-
-    }
-
-    @Test
-    public void test_forEachObserver() {
-
-        analyticsSkuPurchaser.forEachObserver(mockedPurchaseListenerConsumer);
-
-        verify(mockedSkuPurchaser, times(1)).forEachObserver(mockedPurchaseListenerConsumer);
-    }
-
-
-    @Test
-    public void test_removeObservers() {
-
-        analyticsSkuPurchaser.removeObservers();
-
-        verify(mockedSkuPurchaser, times(1)).removeObservers();
     }
 
     @Test
@@ -219,5 +207,15 @@ public class AnalyticsSkuPurchaserTest {
 
         verify(mockedListener, times(1)).onPurchaseFlowLaunchFailed(unavailable());
         chronicleMockedStatic.verify(never(), () -> Chronicle.recordBeginCheckoutEvent(any()));
+    }
+
+    @Test
+    public void test_observeLifecycle() {
+
+        ILifecycleOwner mockedLifecycleOwner = mock(ILifecycleOwner.class);
+
+        analyticsSkuPurchaser.observeLifecycle(mockedLifecycleOwner);
+
+        verify(mockedSkuPurchaser, times(1)).observeLifecycle(mockedLifecycleOwner);
     }
 }

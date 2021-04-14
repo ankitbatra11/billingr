@@ -112,7 +112,7 @@ public class GooglePurchaseConsumerTest {
         googlePurchaseConsumer.consumePurchases(null, mockedConsumePurchasesCallback);
 
         verify(mockedConsumePurchasesCallback, times(1))
-                .onPurchasesConsumptionProcessFailure(billingrExceptionArgumentCaptor.capture());
+                .onPurchasesConsumptionFailure(billingrExceptionArgumentCaptor.capture());
 
         assertThat(billingrExceptionArgumentCaptor.getAllValues(), hasSize(1));
         assertThat(billingrExceptionArgumentCaptor.getValue().getCause(), sameInstance(GET_ERROR));
@@ -161,7 +161,7 @@ public class GooglePurchaseConsumerTest {
         googlePurchaseConsumer.consumePurchases(null, mockedConsumePurchasesCallback);
 
         verify(mockedConsumePurchasesCallback, times(1))
-                .onPurchasesConsumptionProcessFailure(billingrExceptionArgumentCaptor.capture());
+                .onPurchasesConsumptionFailure(billingrExceptionArgumentCaptor.capture());
 
         assertThat(billingrExceptionArgumentCaptor.getAllValues(), hasSize(1));
         assertThat(billingrExceptionArgumentCaptor.getValue(), sameInstance(unavailable()));
