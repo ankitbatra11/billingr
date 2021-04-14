@@ -27,7 +27,7 @@ public class BillingDemoActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         BillingrBuilder billingrBuilder = BillingrBuilder.google(this);
-        billingrBuilder.setAnalyticsEnabled(true);
+        billingrBuilder.withAnalyticsEnabled(true);
         billingrBuilder.build().fetchInAppPurchases(new PurchaseListener() {
             @Override
             public void onBillingUnavailable() {
