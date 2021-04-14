@@ -10,7 +10,7 @@ public interface BillingrBuilder {
         return new GoogleBillingrBuilder(context.getApplicationContext());
     }
 
-    void setAnalyticsEnabled(boolean analyticsEnabled);
+    void withAnalyticsEnabled(boolean analyticsEnabled);
 
     Billingr build();
 }

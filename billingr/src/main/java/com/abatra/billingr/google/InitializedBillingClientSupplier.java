@@ -23,12 +23,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 import timber.log.Timber;
 
 public class InitializedBillingClientSupplier implements LifecycleObserverObservable<PurchaseListener> {
 
-    private final BillingClientFactory billingClientFactory;
+    final Function<PurchasesUpdatedListener, BillingClient> billingClientFactory;
 
     final AtomicBoolean retriedInitializing = new AtomicBoolean(false);
     final AtomicBoolean connecting = new AtomicBoolean(false);
@@ -40,7 +41,7 @@ public class InitializedBillingClientSupplier implements LifecycleObserverObserv
     @Nullable
     BillingClient billingClient;
 
-    public InitializedBillingClientSupplier(BillingClientFactory billingClientFactory) {
+    public InitializedBillingClientSupplier(Function<PurchasesUpdatedListener, BillingClient> billingClientFactory) {
         this.billingClientFactory = billingClientFactory;
     }
 
@@ -90,7 +91,7 @@ public class InitializedBillingClientSupplier implements LifecycleObserverObserv
         endConnection();
 
         PurchaseListener purchasesUpdatedListener = new PurchaseListener(new WeakReference<>(this));
-        billingClient = billingClientFactory.createPendingPurchasesEnabledBillingClient(purchasesUpdatedListener);
+        billingClient = billingClientFactory.apply(purchasesUpdatedListener);
         billingClient.startConnection(new ConnectionListener(new WeakReference<>(this)));
     }
 

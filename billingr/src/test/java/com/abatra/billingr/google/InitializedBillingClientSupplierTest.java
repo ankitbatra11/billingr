@@ -20,6 +20,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -43,7 +44,7 @@ public class InitializedBillingClientSupplierTest {
     public static final String DISCOUNTED_SKU = "discountedSku";
 
     @Mock
-    private BillingClientFactory mockedBillingClientFactory;
+    private Function<PurchasesUpdatedListener, BillingClient> mockedBillingClientFactory;
 
     @InjectMocks
     private InitializedBillingClientSupplier initializedBillingClientSupplier;
@@ -74,8 +75,7 @@ public class InitializedBillingClientSupplierTest {
 
     @Before
     public void setup() {
-        when(mockedBillingClientFactory.createPendingPurchasesEnabledBillingClient(any(PurchasesUpdatedListener.class)))
-                .thenReturn(mockedBillingClient);
+        when(mockedBillingClientFactory.apply(any(PurchasesUpdatedListener.class))).thenReturn(mockedBillingClient);
     }
 
     @Test
@@ -193,8 +193,7 @@ public class InitializedBillingClientSupplierTest {
 
         initializedBillingClientSupplier.getInitializedBillingClient(mockedListener);
 
-        verify(mockedBillingClientFactory, times(1)).createPendingPurchasesEnabledBillingClient(
-                purchasesUpdatedListenerArgumentCaptor.capture());
+        verify(mockedBillingClientFactory, times(1)).apply(purchasesUpdatedListenerArgumentCaptor.capture());
     }
 
     private void verifyUpdatedPurchases(List<SkuPurchase> skuPurchases) {

@@ -5,7 +5,7 @@ abstract public class AbstractBillingrBuilder implements BillingrBuilder {
     private boolean analyticsEnabled = false;
 
     @Override
-    public void setAnalyticsEnabled(boolean analyticsEnabled) {
+    public void withAnalyticsEnabled(boolean analyticsEnabled) {
         this.analyticsEnabled = analyticsEnabled;
     }
 
