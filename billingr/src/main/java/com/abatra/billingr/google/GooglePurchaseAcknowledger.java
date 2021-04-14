@@ -58,10 +58,10 @@ public class GooglePurchaseAcknowledger implements PurchaseAcknowledger {
 
     private void tryAcknowledgingPurchase(SkuPurchase skuPurchase, AcknowledgePurchaseCallback callback, BillingClient billingClient) {
         GoogleSkuPurchase googleSkuPurchase = (GoogleSkuPurchase) skuPurchase;
-        if (googleSkuPurchase.getPurchase().isAcknowledged()) {
+        if (skuPurchase.isAcknowledged()) {
             callback.onPurchaseAcknowledged(skuPurchase);
         } else {
-            if (GoogleBillingUtils.isPurchased(googleSkuPurchase.getPurchase())) {
+            if (skuPurchase.isPurchased()) {
                 acknowledgePurchase(googleSkuPurchase, callback, billingClient);
             } else {
                 String message = "Purchase=" + skuPurchase + " has not been purchased yet!";
@@ -85,11 +85,9 @@ public class GooglePurchaseAcknowledger implements PurchaseAcknowledger {
                 Timber.v("purchase=%s acknowledged successfully!", googleSkuPurchase);
                 callback.onPurchaseAcknowledged(googleSkuPurchase);
             } else {
-
-                Timber.w("unexpected billing result=%s from acknowledgePurchase for sku=%s",
-                        GoogleBillingUtils.toString(result), googleSkuPurchase.getSku());
-
-                callback.onPurchaseAcknowledgeFailed(googleSkuPurchase, GoogleBillingrException.from(result));
+                GoogleBillingrException billingrException = GoogleBillingrException.from(result);
+                Timber.w(billingrException, "Failed to acknowledge purchase for sku=%s", googleSkuPurchase.getSku());
+                callback.onPurchaseAcknowledgeFailed(googleSkuPurchase, billingrException);
             }
         });
     }
@@ -104,7 +102,7 @@ public class GooglePurchaseAcknowledger implements PurchaseAcknowledger {
 
             @Override
             public void initializationFailed(BillingrException billingrException) {
-                callback.onPurchaseAcknowledgeProcessFailure(billingrException);
+                callback.onPurchasesAcknowledgeFailure(billingrException);
             }
 
             @Override

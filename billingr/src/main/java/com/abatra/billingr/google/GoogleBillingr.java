@@ -1,13 +1,14 @@
 package com.abatra.billingr.google;
 
-import com.abatra.android.wheelie.java8.Consumer;
 import com.abatra.android.wheelie.lifecycle.ILifecycleOwner;
 import com.abatra.billingr.BillingAvailabilityChecker;
 import com.abatra.billingr.Billingr;
+import com.abatra.billingr.DefaultPurchaseListener;
 import com.abatra.billingr.purchase.AcknowledgePurchaseCallback;
 import com.abatra.billingr.purchase.AcknowledgePurchasesCallback;
 import com.abatra.billingr.purchase.ConsumePurchaseCallback;
 import com.abatra.billingr.purchase.ConsumePurchasesCallback;
+import com.abatra.billingr.purchase.DefaultAcknowledgePurchasesCallback;
 import com.abatra.billingr.purchase.PurchaseAcknowledger;
 import com.abatra.billingr.purchase.PurchaseConsumer;
 import com.abatra.billingr.purchase.PurchaseFetcher;
@@ -17,11 +18,13 @@ import com.abatra.billingr.purchase.SkuPurchase;
 import com.abatra.billingr.purchase.SkuPurchaser;
 import com.abatra.billingr.sku.SkuDetailsFetcher;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class GoogleBillingr implements Billingr {
 
-    final InitializedBillingClientSupplier billingClientSupplier;
     final PurchaseFetcher purchaseFetcher;
     final SkuDetailsFetcher skuDetailsFetcher;
     final SkuPurchaser skuPurchaser;
@@ -29,14 +32,12 @@ public class GoogleBillingr implements Billingr {
     final PurchaseConsumer purchaseConsumer;
     final PurchaseAcknowledger purchaseAcknowledger;
 
-    public GoogleBillingr(InitializedBillingClientSupplier billingClientSupplier,
-                          PurchaseFetcher purchaseFetcher,
+    public GoogleBillingr(PurchaseFetcher purchaseFetcher,
                           SkuDetailsFetcher skuDetailsFetcher,
                           SkuPurchaser skuPurchaser,
                           BillingAvailabilityChecker availabilityChecker,
                           PurchaseConsumer purchaseConsumer,
                           PurchaseAcknowledger purchaseAcknowledger) {
-        this.billingClientSupplier = billingClientSupplier;
         this.purchaseFetcher = purchaseFetcher;
         this.skuDetailsFetcher = skuDetailsFetcher;
         this.skuPurchaser = skuPurchaser;
@@ -47,11 +48,17 @@ public class GoogleBillingr implements Billingr {
 
     @Override
     public void observeLifecycle(ILifecycleOwner lifecycleOwner) {
-        billingClientSupplier.observeLifecycle(lifecycleOwner);
         purchaseFetcher.observeLifecycle(lifecycleOwner);
         skuDetailsFetcher.observeLifecycle(lifecycleOwner);
         skuPurchaser.observeLifecycle(lifecycleOwner);
         availabilityChecker.observeLifecycle(lifecycleOwner);
+        purchaseConsumer.observeLifecycle(lifecycleOwner);
+        purchaseAcknowledger.observeLifecycle(lifecycleOwner);
+    }
+
+    @Override
+    public void setPurchaseListener(PurchaseListener purchaseListener) {
+        skuPurchaser.setPurchaseListener(purchaseListener);
     }
 
     @Override
@@ -62,26 +69,6 @@ public class GoogleBillingr implements Billingr {
     @Override
     public void fetchInAppSkuDetails(List<String> skus, SkuDetailsFetcher.Listener listener) {
         skuDetailsFetcher.fetchInAppSkuDetails(skus, listener);
-    }
-
-    @Override
-    public void addObserver(PurchaseListener observer) {
-        skuPurchaser.addObserver(observer);
-    }
-
-    @Override
-    public void removeObserver(PurchaseListener observer) {
-        skuPurchaser.removeObserver(observer);
-    }
-
-    @Override
-    public void forEachObserver(Consumer<PurchaseListener> observerConsumer) {
-        skuPurchaser.forEachObserver(observerConsumer);
-    }
-
-    @Override
-    public void removeObservers() {
-        skuPurchaser.removeObservers();
     }
 
     @Override
@@ -112,5 +99,23 @@ public class GoogleBillingr implements Billingr {
     @Override
     public void acknowledgePurchases(List<SkuPurchase> skuPurchases, AcknowledgePurchasesCallback callback) {
         purchaseAcknowledger.acknowledgePurchases(skuPurchases, callback);
+    }
+
+    @Override
+    public void fetchInAppPurchasesAndAck() {
+        purchaseFetcher.fetchInAppPurchases(new DefaultPurchaseListener() {
+
+            @Override
+            public void onPurchasesLoaded(List<SkuPurchase> skuPurchases) {
+                acknowledgePurchases(filterPurchasesToAck(skuPurchases), DefaultAcknowledgePurchasesCallback.INSTANCE);
+            }
+        });
+    }
+
+    @NotNull
+    private List<SkuPurchase> filterPurchasesToAck(List<SkuPurchase> skuPurchases) {
+        return skuPurchases.stream()
+                .filter(p -> p.isPurchased() && !p.isAcknowledged())
+                .collect(Collectors.toList());
     }
 }

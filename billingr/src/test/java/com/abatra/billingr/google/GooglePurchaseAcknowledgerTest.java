@@ -15,7 +15,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -127,7 +126,7 @@ public class GooglePurchaseAcknowledgerTest {
 
         googlePurchaseAcknowledger.acknowledgePurchases(Collections.emptyList(), mockedAcknowledgePurchasesCallback);
 
-        verify(mockedAcknowledgePurchasesCallback, times(1)).onPurchaseAcknowledgeProcessFailure(error);
+        verify(mockedAcknowledgePurchasesCallback, times(1)).onPurchasesAcknowledgeFailure(error);
     }
 
     @Test

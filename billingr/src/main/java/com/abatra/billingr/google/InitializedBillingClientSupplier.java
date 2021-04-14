@@ -3,12 +3,10 @@ package com.abatra.billingr.google;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.abatra.android.wheelie.java8.Consumer;
-import com.abatra.android.wheelie.lifecycle.LifecycleObserverObservable;
-import com.abatra.android.wheelie.pattern.Observable;
+import com.abatra.android.wheelie.lifecycle.ILifecycleObserver;
 import com.abatra.billingr.BillingUnavailableCallback;
 import com.abatra.billingr.BillingrException;
-import com.abatra.billingr.purchase.PurchaseListener;
+import com.abatra.billingr.PurchasesNotifier;
 import com.abatra.billingr.purchase.SkuPurchase;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClientStateListener;
@@ -27,7 +25,7 @@ import java.util.function.Function;
 
 import timber.log.Timber;
 
-public class InitializedBillingClientSupplier implements LifecycleObserverObservable<PurchaseListener> {
+public class InitializedBillingClientSupplier implements ILifecycleObserver, PurchasesNotifier {
 
     final Function<PurchasesUpdatedListener, BillingClient> billingClientFactory;
 
@@ -35,9 +33,9 @@ public class InitializedBillingClientSupplier implements LifecycleObserverObserv
     final AtomicBoolean connecting = new AtomicBoolean(false);
 
     @Nullable
+    private com.abatra.billingr.purchase.PurchaseListener purchaseListener;
+    @Nullable
     private Listener listener;
-    private final Observable<com.abatra.billingr.purchase.PurchaseListener> purchaseListeners = Observable.hashSet();
-
     @Nullable
     BillingClient billingClient;
 
@@ -46,24 +44,8 @@ public class InitializedBillingClientSupplier implements LifecycleObserverObserv
     }
 
     @Override
-    public void addObserver(com.abatra.billingr.purchase.PurchaseListener observer) {
-        purchaseListeners.addObserver(observer);
-    }
-
-    @Override
-    public void removeObserver(com.abatra.billingr.purchase.PurchaseListener observer) {
-        purchaseListeners.addObserver(observer);
-    }
-
-    @Override
-    public void forEachObserver(Consumer<com.abatra.billingr.purchase.PurchaseListener> observerConsumer) {
-        purchaseListeners.forEachObserver(observerConsumer);
-    }
-
-    @Override
-    public void removeObservers() {
-        listener = null;
-        purchaseListeners.removeObservers();
+    public void setPurchaseListener(@Nullable com.abatra.billingr.purchase.PurchaseListener purchaseListener) {
+        this.purchaseListener = purchaseListener;
     }
 
     public void getInitializedBillingClient(Listener listener) {
@@ -151,7 +133,7 @@ public class InitializedBillingClientSupplier implements LifecycleObserverObserv
                 if (skuPurchases.isEmpty()) {
                     Timber.i("purchase list is empty");
                 } else {
-                    forEachObserver(purchaseListener -> purchaseListener.onPurchasesLoaded(skuPurchases));
+                    Optional.ofNullable(purchaseListener).ifPresent(pl -> pl.onPurchasesLoaded(skuPurchases));
                 }
             } else {
                 Timber.w("billing result is OK purchase list is null");
@@ -163,7 +145,8 @@ public class InitializedBillingClientSupplier implements LifecycleObserverObserv
 
     @Override
     public void onDestroy() {
-        removeObservers();
+        listener = null;
+        purchaseListener = null;
         endConnection();
     }
 

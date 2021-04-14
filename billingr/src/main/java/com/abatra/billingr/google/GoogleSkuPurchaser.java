@@ -1,11 +1,10 @@
 package com.abatra.billingr.google;
 
-import com.abatra.android.wheelie.java8.Consumer;
 import com.abatra.android.wheelie.lifecycle.ILifecycleOwner;
+import com.abatra.billingr.BillingrException;
 import com.abatra.billingr.purchase.PurchaseListener;
 import com.abatra.billingr.purchase.PurchaseSkuRequest;
 import com.abatra.billingr.purchase.SkuPurchaser;
-import com.abatra.billingr.BillingrException;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingFlowParams;
 import com.android.billingclient.api.BillingResult;
@@ -28,23 +27,8 @@ public class GoogleSkuPurchaser implements SkuPurchaser {
     }
 
     @Override
-    public void addObserver(PurchaseListener observer) {
-        billingClientSupplier.addObserver(observer);
-    }
-
-    @Override
-    public void removeObserver(PurchaseListener observer) {
-        billingClientSupplier.removeObserver(observer);
-    }
-
-    @Override
-    public void forEachObserver(Consumer<PurchaseListener> observerConsumer) {
-        billingClientSupplier.forEachObserver(observerConsumer);
-    }
-
-    @Override
-    public void removeObservers() {
-        billingClientSupplier.removeObservers();
+    public void setPurchaseListener(PurchaseListener purchaseListener) {
+        billingClientSupplier.setPurchaseListener(purchaseListener);
     }
 
     @Override

@@ -6,5 +6,7 @@ public interface SkuPurchase {
 
     String getPurchaseToken();
 
-    boolean isAcknowledgedPurchased();
+    boolean isPurchased();
+
+    boolean isAcknowledged();
 }

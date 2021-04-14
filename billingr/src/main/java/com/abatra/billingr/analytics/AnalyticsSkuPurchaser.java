@@ -7,28 +7,26 @@ import com.abatra.android.wheelie.chronicle.model.BeginCheckoutEventParams;
 import com.abatra.android.wheelie.chronicle.model.Price;
 import com.abatra.android.wheelie.chronicle.model.PurchasableItem;
 import com.abatra.android.wheelie.chronicle.model.PurchaseEventParams;
-import com.abatra.android.wheelie.java8.Consumer;
 import com.abatra.android.wheelie.lifecycle.ILifecycleOwner;
 import com.abatra.billingr.BillingUnavailableCallback;
 import com.abatra.billingr.BillingrException;
 import com.abatra.billingr.purchase.PurchaseListener;
 import com.abatra.billingr.purchase.PurchaseSkuRequest;
-import com.abatra.billingr.sku.Sku;
 import com.abatra.billingr.purchase.SkuPurchase;
 import com.abatra.billingr.purchase.SkuPurchaser;
+import com.abatra.billingr.sku.Sku;
 
 import java.util.List;
 import java.util.Optional;
 
 public class AnalyticsSkuPurchaser implements SkuPurchaser, PurchaseListener.NoOpPurchaseListener {
 
-    private final SkuPurchaser delegate;
+    public final SkuPurchaser delegate;
     @Nullable
     Sku checkedOutSku;
 
     public AnalyticsSkuPurchaser(SkuPurchaser delegate) {
         this.delegate = delegate;
-        this.delegate.addObserver(this);
     }
 
     @Override
@@ -37,13 +35,29 @@ public class AnalyticsSkuPurchaser implements SkuPurchaser, PurchaseListener.NoO
     }
 
     @Override
-    public void onPurchasesLoaded(List<SkuPurchase> skuPurchases) {
-        Optional.ofNullable(checkedOutSku).ifPresent(sku -> logPurchaseEvent(sku, skuPurchases));
+    public void setPurchaseListener(PurchaseListener purchaseListener) {
+        delegate.setPurchaseListener(new PurchaseListener() {
+            @Override
+            public void onBillingUnavailable() {
+                purchaseListener.onBillingUnavailable();
+            }
+
+            @Override
+            public void onPurchasesLoaded(List<SkuPurchase> skuPurchases) {
+                purchaseListener.onPurchasesLoaded(skuPurchases);
+                Optional.ofNullable(checkedOutSku).ifPresent(sku -> logPurchaseEvent(sku, skuPurchases));
+            }
+
+            @Override
+            public void onPurchasesLoadFailed(BillingrException error) {
+                purchaseListener.onPurchasesLoadFailed(error);
+            }
+        });
     }
 
     private void logPurchaseEvent(Sku sku, List<SkuPurchase> skuPurchases) {
         skuPurchases.stream()
-                .filter(SkuPurchase::isAcknowledgedPurchased)
+                .filter(SkuPurchase::isAcknowledgedPurchase)
                 .filter(skuPurchase -> skuPurchase.getSku().equalsIgnoreCase(sku.getId()))
                 .findFirst()
                 .ifPresent(skuPurchase -> Chronicle.recordPurchaseEvent(createPurchaseEventParams(sku, skuPurchase)));
@@ -57,7 +71,6 @@ public class AnalyticsSkuPurchaser implements SkuPurchaser, PurchaseListener.NoO
                 .addPurchasedItem(createPurchasableItem(sku));
     }
 
-
     private Price createPrice(Sku sku) {
         return new Price(sku.getPriceAmount(), sku.getCurrency());
     }
@@ -69,26 +82,6 @@ public class AnalyticsSkuPurchaser implements SkuPurchaser, PurchaseListener.NoO
                 .setCategory(sku.getType().asPurchasableItemCategory())
                 .setPrice(sku.getPriceAmount())
                 .setQuantity(1);
-    }
-
-    @Override
-    public void addObserver(PurchaseListener observer) {
-        delegate.addObserver(observer);
-    }
-
-    @Override
-    public void removeObserver(PurchaseListener observer) {
-        delegate.removeObserver(observer);
-    }
-
-    @Override
-    public void forEachObserver(Consumer<PurchaseListener> observerConsumer) {
-        delegate.forEachObserver(observerConsumer);
-    }
-
-    @Override
-    public void removeObservers() {
-        delegate.removeObservers();
     }
 
     private void logBeginCheckoutEvent(Sku checkedOutSku) {
@@ -123,12 +116,5 @@ public class AnalyticsSkuPurchaser implements SkuPurchaser, PurchaseListener.NoO
                 listener.ifPresent(l -> l.onPurchaseFlowLaunchFailed(billingrException));
             }
         }));
-    }
-
-    /*
-     * Testing
-     */
-    public SkuPurchaser getDelegate() {
-        return delegate;
     }
 }
