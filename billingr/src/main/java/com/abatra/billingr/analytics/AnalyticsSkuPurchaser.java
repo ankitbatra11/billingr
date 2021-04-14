@@ -57,7 +57,7 @@ public class AnalyticsSkuPurchaser implements SkuPurchaser, PurchaseListener.NoO
 
     private void logPurchaseEvent(Sku sku, List<SkuPurchase> skuPurchases) {
         skuPurchases.stream()
-                .filter(SkuPurchase::isAcknowledgedPurchase)
+                .filter(SkuPurchase::isPurchased)
                 .filter(skuPurchase -> skuPurchase.getSku().equalsIgnoreCase(sku.getId()))
                 .findFirst()
                 .ifPresent(skuPurchase -> Chronicle.recordPurchaseEvent(createPurchaseEventParams(sku, skuPurchase)));

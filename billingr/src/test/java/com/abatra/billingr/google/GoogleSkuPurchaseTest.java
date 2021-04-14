@@ -42,33 +42,12 @@ public class GoogleSkuPurchaseTest {
     }
 
     @Test
-    public void test_isAcknowledgedPurchased_notAck() {
-
-        when(purchase.isAcknowledged()).thenReturn(false);
-
-        assertThat(googleSkuPurchase.isAcknowledgedPurchase(), equalTo(false));
-    }
-
-    @Test
-    public void test_isAcknowledgedPurchased_ack_notPurchased() {
+    public void test_isAcknowledged() {
 
         when(purchase.isAcknowledged()).thenReturn(true);
-        when(purchase.getPurchaseState()).thenReturn(Purchase.PurchaseState.PENDING);
 
-        assertThat(googleSkuPurchase.isAcknowledgedPurchase(), equalTo(false));
-    }
+        assertThat(googleSkuPurchase.isAcknowledged(), equalTo(true));
 
-    @Test
-    public void test_isAcknowledgedPurchased_ack_purchased() {
-
-        when(purchase.isAcknowledged()).thenReturn(true);
-        when(purchase.getPurchaseState()).thenReturn(Purchase.PurchaseState.PURCHASED);
-
-        assertThat(googleSkuPurchase.isAcknowledgedPurchase(), equalTo(true));
-    }
-
-    @Test
-    public void test_getPurchase() {
-        assertThat(googleSkuPurchase.getPurchase(), sameInstance(purchase));
+        verify(purchase, times(1)).isAcknowledged();
     }
 }

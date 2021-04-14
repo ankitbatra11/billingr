@@ -8,7 +8,6 @@ import com.abatra.billingr.purchase.SkuPurchase;
 import com.android.billingclient.api.AcknowledgePurchaseResponseListener;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingResult;
-import com.android.billingclient.api.Purchase;
 
 import org.hamcrest.Matchers;
 import org.junit.Before;
@@ -56,9 +55,6 @@ public class GooglePurchaseAcknowledgerTest {
     @Mock
     private GoogleSkuPurchase mockedSkuPurchase;
 
-    @Mock
-    private Purchase mockedPurchase;
-
     @Captor
     private ArgumentCaptor<SkuPurchase> skuPurchaseArgumentCaptor;
 
@@ -67,8 +63,6 @@ public class GooglePurchaseAcknowledgerTest {
 
     @Before
     public void setup() {
-
-        when(mockedSkuPurchase.getPurchase()).thenReturn(mockedPurchase);
 
         googlePurchaseAcknowledger = new GooglePurchaseAcknowledger(mockInitialized(mockedBillingClient));
 
@@ -132,7 +126,7 @@ public class GooglePurchaseAcknowledgerTest {
     @Test
     public void test_acknowledgePurchase_gotBillingClient_purchaseAlreadyAcknowledged() {
 
-        when(mockedPurchase.isAcknowledged()).thenReturn(true);
+        when(mockedSkuPurchase.isAcknowledged()).thenReturn(true);
 
         googlePurchaseAcknowledger.acknowledgePurchase(mockedSkuPurchase, mockedCallback);
 
@@ -142,8 +136,8 @@ public class GooglePurchaseAcknowledgerTest {
     @Test
     public void test_acknowledgePurchase_gotBillingClient_purchasePending() {
 
-        when(mockedPurchase.isAcknowledged()).thenReturn(false);
-        when(mockedPurchase.getPurchaseState()).thenReturn(Purchase.PurchaseState.PENDING);
+        when(mockedSkuPurchase.isAcknowledged()).thenReturn(false);
+        when(mockedSkuPurchase.isPurchased()).thenReturn(false);
 
         googlePurchaseAcknowledger.acknowledgePurchase(mockedSkuPurchase, mockedCallback);
 
@@ -160,8 +154,8 @@ public class GooglePurchaseAcknowledgerTest {
     @Test
     public void test_acknowledgePurchase_gotBillingClient_purchasePurchased_billingClientAckPurchaseFails() {
 
-        when(mockedPurchase.isAcknowledged()).thenReturn(false);
-        when(mockedPurchase.getPurchaseState()).thenReturn(Purchase.PurchaseState.PURCHASED);
+        when(mockedSkuPurchase.isAcknowledged()).thenReturn(false);
+        when(mockedSkuPurchase.isPurchased()).thenReturn(true);
 
         googlePurchaseAcknowledger.acknowledgePurchase(mockedSkuPurchase, mockedCallback);
 
@@ -213,8 +207,8 @@ public class GooglePurchaseAcknowledgerTest {
     }
 
     private void mockPurchasedState() {
-        when(mockedPurchase.isAcknowledged()).thenReturn(false);
-        when(mockedPurchase.getPurchaseState()).thenReturn(Purchase.PurchaseState.PURCHASED);
+        when(mockedSkuPurchase.isAcknowledged()).thenReturn(false);
+        when(mockedSkuPurchase.isPurchased()).thenReturn(true);
         when(mockedSkuPurchase.getPurchaseToken()).thenReturn("some token");
     }
 

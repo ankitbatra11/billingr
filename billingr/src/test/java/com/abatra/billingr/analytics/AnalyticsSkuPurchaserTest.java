@@ -5,6 +5,7 @@ import android.app.Activity;
 import com.abatra.android.wheelie.chronicle.Chronicle;
 import com.abatra.android.wheelie.chronicle.model.BeginCheckoutEventParams;
 import com.abatra.android.wheelie.chronicle.model.PurchaseEventParams;
+import com.abatra.android.wheelie.lifecycle.ILifecycleOwner;
 import com.abatra.billingr.BillingUnavailableCallback;
 import com.abatra.billingr.purchase.PurchaseListener;
 import com.abatra.billingr.purchase.PurchaseSkuRequest;
@@ -33,6 +34,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -97,7 +99,7 @@ public class AnalyticsSkuPurchaserTest {
         when(mockedSku.getCurrency()).thenReturn(CURRENCY);
 
         when(mockedSkuPurchase.getSku()).thenReturn(SKU_ID);
-        when(mockedSkuPurchase.isAcknowledgedPurchase()).thenReturn(true);
+        when(mockedSkuPurchase.isPurchased()).thenReturn(true);
 
         chronicleMockedStatic = mockStatic(Chronicle.class);
 
@@ -205,5 +207,15 @@ public class AnalyticsSkuPurchaserTest {
 
         verify(mockedListener, times(1)).onPurchaseFlowLaunchFailed(unavailable());
         chronicleMockedStatic.verify(never(), () -> Chronicle.recordBeginCheckoutEvent(any()));
+    }
+
+    @Test
+    public void test_observeLifecycle() {
+
+        ILifecycleOwner mockedLifecycleOwner = mock(ILifecycleOwner.class);
+
+        analyticsSkuPurchaser.observeLifecycle(mockedLifecycleOwner);
+
+        verify(mockedSkuPurchaser, times(1)).observeLifecycle(mockedLifecycleOwner);
     }
 }

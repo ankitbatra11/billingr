@@ -115,7 +115,7 @@ public class GoogleBillingr implements Billingr {
     @NotNull
     private List<SkuPurchase> filterPurchasesToAck(List<SkuPurchase> skuPurchases) {
         return skuPurchases.stream()
-                .filter(p -> p.isPurchased() && !p.isAcknowledged())
+                .filter(sp -> sp.isPurchased() && !sp.isAcknowledged())
                 .collect(Collectors.toList());
     }
 }

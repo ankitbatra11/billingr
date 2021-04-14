@@ -175,7 +175,7 @@ public class GoogleBillingUtilsTest {
         for (int i = 0; i < 2; i++) {
             assertThat(skuPurchases.get(i), instanceOf(GoogleSkuPurchase.class));
             GoogleSkuPurchase purchase = (GoogleSkuPurchase) skuPurchases.get(i);
-            assertThat(purchase.getPurchase(), sameInstance(purchases.get(i)));
+            assertThat(purchase.purchase, sameInstance(purchases.get(i)));
         }
     }
 
