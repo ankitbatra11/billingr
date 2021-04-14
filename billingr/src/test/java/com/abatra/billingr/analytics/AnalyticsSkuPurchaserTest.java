@@ -7,7 +7,6 @@ import com.abatra.android.wheelie.chronicle.model.BeginCheckoutEventParams;
 import com.abatra.android.wheelie.chronicle.model.PurchaseEventParams;
 import com.abatra.android.wheelie.java8.Consumer;
 import com.abatra.billingr.BillingUnavailableCallback;
-import com.abatra.billingr.BillingrException;
 import com.abatra.billingr.purchase.PurchaseListener;
 import com.abatra.billingr.purchase.PurchaseSkuRequest;
 import com.abatra.billingr.purchase.SkuPurchase;
@@ -24,11 +23,11 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
 
+import static com.abatra.billingr.google.GoogleBillingrException.unavailable;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
@@ -211,14 +210,14 @@ public class AnalyticsSkuPurchaserTest {
         doAnswer(invocation ->
         {
             PurchaseSkuRequest request = invocation.getArgument(0);
-            request.getListener().ifPresent(l -> l.onPurchaseFlowLaunchFailed(BillingrException.unavailable()));
+            request.getListener().ifPresent(l -> l.onPurchaseFlowLaunchFailed(unavailable()));
             return null;
 
         }).when(mockedSkuPurchaser).launchPurchaseFlow(any());
 
         analyticsSkuPurchaser.launchPurchaseFlow(purchaseSkuRequest);
 
-        verify(mockedListener, times(1)).onPurchaseFlowLaunchFailed(BillingrException.unavailable());
+        verify(mockedListener, times(1)).onPurchaseFlowLaunchFailed(unavailable());
         chronicleMockedStatic.verify(never(), () -> Chronicle.recordBeginCheckoutEvent(any()));
     }
 }

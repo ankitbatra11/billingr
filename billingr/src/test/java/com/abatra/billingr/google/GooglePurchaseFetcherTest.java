@@ -3,7 +3,6 @@ package com.abatra.billingr.google;
 import com.abatra.android.wheelie.lifecycle.ILifecycleOwner;
 import com.abatra.billingr.BillingrException;
 import com.abatra.billingr.purchase.PurchaseListener;
-import com.abatra.billingr.purchase.SkuPurchase;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.Purchase;
@@ -18,10 +17,9 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
-import java.util.List;
 
-import static com.abatra.billingr.BillingrException.unavailable;
 import static com.abatra.billingr.google.BillingResultMocker.mockBillingResult;
+import static com.abatra.billingr.google.GoogleBillingrException.unavailable;
 import static com.abatra.billingr.google.InitializedBillingClientSupplierMocker.GET_ERROR;
 import static com.abatra.billingr.google.InitializedBillingClientSupplierMocker.mockGetClientFailure;
 import static com.abatra.billingr.google.InitializedBillingClientSupplierMocker.mockInitializationFailure;
@@ -57,9 +55,6 @@ public class GooglePurchaseFetcherTest {
 
     @Mock
     private Purchase.PurchasesResult mockedPurchasesResult;
-
-    @Captor
-    private ArgumentCaptor<List<SkuPurchase>> skuPurchasesArgumentCaptor;
 
     @Before
     public void setup() {

@@ -37,7 +37,7 @@ public class GoogleSkuDetailsFetcher implements SkuDetailsFetcher {
             tryGettingInitializedBillingClient(skus, listener);
         } catch (Throwable error) {
             Timber.e(error);
-            listener.loadingSkuDetailsFailed(new BillingrException(error));
+            listener.loadingSkuDetailsFailed(new GoogleBillingrException(error));
         }
     }
 
@@ -50,7 +50,7 @@ public class GoogleSkuDetailsFetcher implements SkuDetailsFetcher {
                     tryGettingSkuDetails(billingClient, skus, listener);
                 } catch (Throwable error) {
                     Timber.e(error);
-                    listener.loadingSkuDetailsFailed(new BillingrException(error));
+                    listener.loadingSkuDetailsFailed(new GoogleBillingrException(error));
                 }
             }
 

@@ -2,15 +2,20 @@ package com.abatra.billingr.google;
 
 import com.abatra.android.wheelie.lifecycle.ILifecycleOwner;
 import com.abatra.billingr.BillingrException;
+import com.abatra.billingr.purchase.ConsumePurchaseCallback;
+import com.abatra.billingr.purchase.ConsumePurchasesCallback;
 import com.abatra.billingr.purchase.PurchaseConsumer;
 import com.abatra.billingr.purchase.SkuPurchase;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.ConsumeParams;
 
+import java.util.List;
+import java.util.function.Consumer;
+
 import timber.log.Timber;
 
-import static com.abatra.billingr.google.GoogleBillingUtils.*;
 import static com.abatra.billingr.google.GoogleBillingUtils.isOk;
+import static com.abatra.billingr.google.GoogleBillingUtils.reportErrorAndGet;
 
 public class GooglePurchaseConsumer implements PurchaseConsumer {
 
@@ -26,42 +31,47 @@ public class GooglePurchaseConsumer implements PurchaseConsumer {
     }
 
     @Override
-    public void consumePurchase(SkuPurchase skuPurchase, Callback callback) {
-        try {
-            tryGettingInitializedBillingClient(skuPurchase, callback);
-        } catch (Throwable error) {
-            Timber.e(error);
-            callback.onPurchaseConsumeFailed(new BillingrException(error));
-        }
-    }
+    public void consumePurchase(SkuPurchase skuPurchase, ConsumePurchaseCallback callback) {
+        getBillingClient(billingrException -> callback.onPurchaseConsumptionFailed(skuPurchase, billingrException), new InitializedBillingClientSupplier.Listener() {
 
-    private void tryGettingInitializedBillingClient(SkuPurchase skuPurchase, Callback callback) {
-        billingClientSupplier.getInitializedBillingClient(new InitializedBillingClientSupplier.Listener() {
+            @Override
+            public void initialized(BillingClient billingClient) {
+                GooglePurchaseConsumer.this.consumePurchase(billingClient, skuPurchase, callback);
+            }
+
+            @Override
+            public void initializationFailed(BillingrException billingrException) {
+                callback.onPurchaseConsumptionFailed(skuPurchase, billingrException);
+            }
 
             @Override
             public void onBillingUnavailable() {
                 callback.onBillingUnavailable();
             }
-
-            @Override
-            public void initialized(BillingClient billingClient) {
-                try {
-                    tryConsumingPurchase(skuPurchase, callback, billingClient);
-                } catch (Throwable error) {
-                    Timber.e(error);
-                    callback.onPurchaseConsumeFailed(new GoogleBillingrException(error));
-                }
-            }
-
-            @Override
-            public void initializationFailed(BillingrException billingrException) {
-                callback.onPurchaseConsumeFailed(new GoogleBillingrException(billingrException));
-            }
         });
     }
 
+    private void consumePurchase(BillingClient billingClient, SkuPurchase skuPurchase, ConsumePurchaseCallback callback) {
+        try {
+            tryConsumingPurchase(skuPurchase, callback, billingClient);
+        } catch (Throwable error) {
+            Timber.e(error);
+            callback.onPurchaseConsumptionFailed(skuPurchase, new GoogleBillingrException(error));
+        }
+    }
+
+    private void getBillingClient(Consumer<BillingrException> errorConsumer,
+                                  InitializedBillingClientSupplier.Listener listener) {
+        try {
+            billingClientSupplier.getInitializedBillingClient(listener);
+        } catch (Throwable error) {
+            Timber.e(error);
+            errorConsumer.accept(new GoogleBillingrException(error));
+        }
+    }
+
     private void tryConsumingPurchase(SkuPurchase skuPurchase,
-                                      Callback callback,
+                                      ConsumePurchaseCallback callback,
                                       BillingClient billingClient) {
 
         ConsumeParams consumeParams = ConsumeParams.newBuilder()
@@ -71,10 +81,56 @@ public class GooglePurchaseConsumer implements PurchaseConsumer {
         billingClient.consumeAsync(consumeParams, (billingResult, s) -> {
             if (isOk(billingResult)) {
                 Timber.i("purchase=%s has been consumed!", skuPurchase);
-                callback.onPurchaseConsumed();
+                callback.onPurchaseConsumed(skuPurchase);
             } else {
-                callback.onPurchaseConsumeFailed(reportErrorAndGet(billingResult, "Consuming purchase=%s failed!", skuPurchase));
+                callback.onPurchaseConsumptionFailed(skuPurchase, reportErrorAndGet(billingResult, "Consuming purchase=%s failed!", skuPurchase));
             }
         });
+    }
+
+    @Override
+    public void consumePurchases(List<SkuPurchase> skuPurchases, ConsumePurchasesCallback callback) {
+        getBillingClient(callback::onPurchasesConsumptionProcessFailure, new InitializedBillingClientSupplier.Listener() {
+
+            @Override
+            public void initialized(BillingClient billingClient) {
+                consumePurchases(skuPurchases, callback, billingClient);
+            }
+
+            @Override
+            public void initializationFailed(BillingrException billingrException) {
+                callback.onPurchasesConsumptionProcessFailure(billingrException);
+            }
+
+            @Override
+            public void onBillingUnavailable() {
+                callback.onBillingUnavailable();
+            }
+        });
+    }
+
+    private void consumePurchases(List<SkuPurchase> skuPurchases,
+                                  ConsumePurchasesCallback callback,
+                                  BillingClient billingClient) {
+        for (SkuPurchase skuPurchase : skuPurchases) {
+            consumePurchase(billingClient, skuPurchase, new ConsumePurchaseCallback() {
+
+                @Override
+                public void onPurchaseConsumed(SkuPurchase skuPurchase) {
+                    callback.onPurchaseConsumed(skuPurchase);
+                }
+
+                @Override
+                public void onPurchaseConsumptionFailed(SkuPurchase skuPurchase, BillingrException billingrException) {
+                    callback.onPurchaseConsumptionFailed(skuPurchase, billingrException);
+
+                }
+
+                @Override
+                public void onBillingUnavailable() {
+                    callback.onBillingUnavailable();
+                }
+            });
+        }
     }
 }

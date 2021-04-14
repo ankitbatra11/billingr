@@ -36,7 +36,7 @@ public class GooglePurchaseFetcher implements PurchaseFetcher {
             tryGettingInitializedBillingClient(listener);
         } catch (Throwable error) {
             Timber.e(error);
-            listener.onPurchasesLoadFailed(new BillingrException(error));
+            listener.onPurchasesLoadFailed(new GoogleBillingrException(error));
         }
     }
 
@@ -49,7 +49,7 @@ public class GooglePurchaseFetcher implements PurchaseFetcher {
                     queryPurchases(billingClient, listener);
                 } catch (Throwable error) {
                     Timber.e(error);
-                    listener.onPurchasesLoadFailed(new BillingrException(error));
+                    listener.onPurchasesLoadFailed(new GoogleBillingrException(error));
                 }
             }
 
