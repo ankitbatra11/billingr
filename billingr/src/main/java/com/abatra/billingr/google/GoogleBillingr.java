@@ -3,12 +3,14 @@ package com.abatra.billingr.google;
 import com.abatra.android.wheelie.lifecycle.ILifecycleOwner;
 import com.abatra.billingr.BillingAvailabilityChecker;
 import com.abatra.billingr.Billingr;
+import com.abatra.billingr.BillingrException;
 import com.abatra.billingr.DefaultPurchaseListener;
 import com.abatra.billingr.purchase.AcknowledgePurchaseCallback;
 import com.abatra.billingr.purchase.AcknowledgePurchasesCallback;
 import com.abatra.billingr.purchase.ConsumePurchaseCallback;
 import com.abatra.billingr.purchase.ConsumePurchasesCallback;
 import com.abatra.billingr.purchase.DefaultAcknowledgePurchasesCallback;
+import com.abatra.billingr.purchase.DefaultConsumePurchasesCallback;
 import com.abatra.billingr.purchase.PurchaseAcknowledger;
 import com.abatra.billingr.purchase.PurchaseConsumer;
 import com.abatra.billingr.purchase.PurchaseFetcher;
@@ -16,12 +18,15 @@ import com.abatra.billingr.purchase.PurchaseListener;
 import com.abatra.billingr.purchase.PurchaseSkuRequest;
 import com.abatra.billingr.purchase.SkuPurchase;
 import com.abatra.billingr.purchase.SkuPurchaser;
+import com.abatra.billingr.sku.Sku;
 import com.abatra.billingr.sku.SkuDetailsFetcher;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
+import timber.log.Timber;
 
 public class GoogleBillingr implements Billingr {
 
@@ -102,20 +107,62 @@ public class GoogleBillingr implements Billingr {
     }
 
     @Override
-    public void fetchInAppPurchasesAndAck() {
+    public void acknowledgeInAppPurchases() {
         purchaseFetcher.fetchInAppPurchases(new DefaultPurchaseListener() {
 
             @Override
             public void onPurchasesLoaded(List<SkuPurchase> skuPurchases) {
-                acknowledgePurchases(filterPurchasesToAck(skuPurchases), DefaultAcknowledgePurchasesCallback.INSTANCE);
+                acknowledgePurchases(filterUnackedPurchasedPurchases(skuPurchases), DefaultAcknowledgePurchasesCallback.INSTANCE);
             }
         });
     }
 
     @NotNull
-    private List<SkuPurchase> filterPurchasesToAck(List<SkuPurchase> skuPurchases) {
+    private List<SkuPurchase> filterUnackedPurchasedPurchases(List<SkuPurchase> skuPurchases) {
         return skuPurchases.stream()
                 .filter(sp -> sp.isPurchased() && !sp.isAcknowledged())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void consumeInAppPurchases() {
+        purchaseFetcher.fetchInAppPurchases(new DefaultPurchaseListener() {
+            @Override
+            public void onPurchasesLoaded(List<SkuPurchase> skuPurchases) {
+                purchaseConsumer.consumePurchases(filterUnackedPurchasedPurchases(skuPurchases), DefaultConsumePurchasesCallback.INSTANCE);
+            }
+        });
+    }
+
+    @Override
+    public void consumePurchase(Sku sku, ConsumePurchasesCallback consumePurchasesCallback) {
+        purchaseFetcher.fetchInAppPurchases(new PurchaseListener() {
+
+            @Override
+            public void onBillingUnavailable() {
+                consumePurchasesCallback.onBillingUnavailable();
+            }
+
+            @Override
+            public void onPurchasesLoaded(List<SkuPurchase> skuPurchases) {
+                try {
+                    consumePurchases(filterPurchasesBySku(skuPurchases, sku), consumePurchasesCallback);
+                } catch (Throwable error) {
+                    Timber.e(error);
+                    consumePurchasesCallback.onPurchasesConsumptionFailure(new GoogleBillingrException(error));
+                }
+            }
+
+            @Override
+            public void onPurchasesLoadFailed(BillingrException error) {
+                consumePurchasesCallback.onPurchasesConsumptionFailure(error);
+            }
+        });
+    }
+
+    private List<SkuPurchase> filterPurchasesBySku(List<SkuPurchase> skuPurchases, Sku sku) {
+        return skuPurchases.stream()
+                .filter(sp -> sp.getSku().equals(sku.getId()))
                 .collect(Collectors.toList());
     }
 }

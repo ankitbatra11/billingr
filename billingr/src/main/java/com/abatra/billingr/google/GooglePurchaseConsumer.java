@@ -4,7 +4,9 @@ import com.abatra.android.wheelie.lifecycle.ILifecycleOwner;
 import com.abatra.billingr.BillingrException;
 import com.abatra.billingr.purchase.ConsumePurchaseCallback;
 import com.abatra.billingr.purchase.ConsumePurchasesCallback;
+import com.abatra.billingr.purchase.DefaultConsumePurchaseCallback;
 import com.abatra.billingr.purchase.PurchaseConsumer;
+import com.abatra.billingr.purchase.PurchasesConsumptionResult;
 import com.abatra.billingr.purchase.SkuPurchase;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.ConsumeParams;
@@ -112,24 +114,25 @@ public class GooglePurchaseConsumer implements PurchaseConsumer {
     private void consumePurchases(List<SkuPurchase> skuPurchases,
                                   ConsumePurchasesCallback callback,
                                   BillingClient billingClient) {
+
+        PurchasesConsumptionResult result = new PurchasesConsumptionResult(skuPurchases);
+        callback.onPurchasesConsumptionResultUpdated(result);
+
         for (SkuPurchase skuPurchase : skuPurchases) {
-            consumePurchase(billingClient, skuPurchase, new ConsumePurchaseCallback() {
+            consumePurchase(billingClient, skuPurchase, new DefaultConsumePurchaseCallback() {
 
                 @Override
                 public void onPurchaseConsumed(SkuPurchase skuPurchase) {
-                    callback.onPurchaseConsumed(skuPurchase);
+                    result.onPurchaseConsumed(skuPurchase);
+                    callback.onPurchasesConsumptionResultUpdated(result);
                 }
 
                 @Override
                 public void onPurchaseConsumptionFailed(SkuPurchase skuPurchase, BillingrException billingrException) {
-                    callback.onPurchaseConsumptionFailed(skuPurchase, billingrException);
-
+                    result.onPurchaseConsumptionFailed(skuPurchase, billingrException);
+                    callback.onPurchasesConsumptionResultUpdated(result);
                 }
 
-                @Override
-                public void onBillingUnavailable() {
-                    callback.onBillingUnavailable();
-                }
             });
         }
     }

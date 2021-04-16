@@ -5,6 +5,7 @@ import com.abatra.billingr.BillingrException;
 import com.abatra.billingr.purchase.PurchaseFetcher;
 import com.abatra.billingr.purchase.PurchaseListener;
 import com.abatra.billingr.purchase.SkuPurchase;
+import com.abatra.billingr.sku.Sku;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.Purchase;
 

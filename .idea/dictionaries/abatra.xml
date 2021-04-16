@@ -10,6 +10,7 @@
       <w>lifecycled</w>
       <w>serde</w>
       <w>skus</w>
+      <w>unacked</w>
     </words>
   </dictionary>
 </component>

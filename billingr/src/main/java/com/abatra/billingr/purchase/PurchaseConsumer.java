@@ -9,5 +9,4 @@ public interface PurchaseConsumer extends ILifecycleObserver {
     void consumePurchase(SkuPurchase skuPurchase, ConsumePurchaseCallback callback);
 
     void consumePurchases(List<SkuPurchase> skuPurchases, ConsumePurchasesCallback callback);
-
 }

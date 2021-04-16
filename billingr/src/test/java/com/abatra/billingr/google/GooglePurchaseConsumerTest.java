@@ -4,6 +4,7 @@ import com.abatra.android.wheelie.lifecycle.ILifecycleOwner;
 import com.abatra.billingr.BillingrException;
 import com.abatra.billingr.purchase.ConsumePurchaseCallback;
 import com.abatra.billingr.purchase.ConsumePurchasesCallback;
+import com.abatra.billingr.purchase.PurchasesConsumptionResult;
 import com.abatra.billingr.purchase.SkuPurchase;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingResult;
@@ -34,7 +35,6 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -68,6 +68,9 @@ public class GooglePurchaseConsumerTest {
 
     @Mock
     private ConsumePurchasesCallback mockedConsumePurchasesCallback;
+
+    @Captor
+    private ArgumentCaptor<PurchasesConsumptionResult> purchasesConsumptionResultArgumentCaptor;
 
     @Before
     public void setup() {
@@ -231,10 +234,13 @@ public class GooglePurchaseConsumerTest {
 
         googlePurchaseConsumer.consumePurchases(Arrays.asList(mockedGoogleSkuPurchase, googleSkuPurchase), mockedConsumePurchasesCallback);
 
-        verify(mockedConsumePurchasesCallback, times(1)).onPurchaseConsumed(mockedGoogleSkuPurchase);
-        verify(mockedConsumePurchasesCallback, times(1)).onPurchaseConsumptionFailed(same(googleSkuPurchase),
-                any(GoogleBillingrException.class));
+        verify(mockedConsumePurchasesCallback, times(3)).onPurchasesConsumptionResultUpdated(purchasesConsumptionResultArgumentCaptor.capture());
+        assertThat(purchasesConsumptionResultArgumentCaptor.getAllValues(), hasSize(3));
 
+        assertThat(purchasesConsumptionResultArgumentCaptor.getValue().getConsumedPurchases(), hasSize(1));
+        assertThat(purchasesConsumptionResultArgumentCaptor.getValue().getFailedToConsumePurchases(), hasSize(1));
+        assertThat(purchasesConsumptionResultArgumentCaptor.getValue().getPurchasesToConsume(), hasSize(2));
+        assertThat(purchasesConsumptionResultArgumentCaptor.getValue().isComplete(), equalTo(true));
     }
 
 }
