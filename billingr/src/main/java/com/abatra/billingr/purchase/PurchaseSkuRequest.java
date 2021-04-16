@@ -18,7 +18,6 @@ public class PurchaseSkuRequest {
     public PurchaseSkuRequest(Activity activity, Sku sku) {
         this.activity = activity;
         this.sku = sku;
-        this.listener = listener;
     }
 
     public PurchaseSkuRequest(PurchaseSkuRequest request) {
