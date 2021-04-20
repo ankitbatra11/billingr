@@ -3,7 +3,8 @@ package com.abatra.billingr.google;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.abatra.android.wheelie.lifecycle.ILifecycleObserver;
+import com.abatra.android.wheelie.lifecycle.observer.ILifecycleObserver;
+import com.abatra.android.wheelie.lifecycle.owner.ILifecycleOwner;
 import com.abatra.billingr.BillingUnavailableCallback;
 import com.abatra.billingr.BillingrException;
 import com.abatra.billingr.PurchasesNotifier;
@@ -41,6 +42,11 @@ public class InitializedBillingClientSupplier implements ILifecycleObserver, Pur
 
     public InitializedBillingClientSupplier(Function<PurchasesUpdatedListener, BillingClient> billingClientFactory) {
         this.billingClientFactory = billingClientFactory;
+    }
+
+    @Override
+    public void observeLifecycle(ILifecycleOwner lifecycleOwner) {
+        lifecycleOwner.getLifecycle().addObserver(this);
     }
 
     @Override

@@ -1,6 +1,6 @@
 package com.abatra.billingr;
 
-import com.abatra.android.wheelie.lifecycle.ILifecycleObserver;
+import com.abatra.android.wheelie.lifecycle.observer.ILifecycleObserver;
 import com.android.billingclient.api.BillingClient;
 
 public interface BillingAvailabilityChecker extends ILifecycleObserver {

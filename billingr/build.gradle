@@ -52,7 +52,9 @@ dependencies {
     api group: 'androidx.annotation', name: 'annotation', version: '1.2.0'
     api group: 'androidx.lifecycle', name: 'lifecycle-runtime', version: '2.3.1'
     api group: 'com.parse.bolts', name: 'bolts-tasks', version: BOLTS_VERSION
-    api group: 'com.github.ankitbatra11', name: 'wheelie', version: '4.33.0'
+    api group: 'com.github.ankitbatra11', name: 'wheelie', version: '4.35.0'
+
+    implementation group: 'androidx.fragment', name: 'fragment', version: '1.3.2'
 
     implementation group: 'com.android.billingclient', name: 'billing', version: BILLING_CLIENT_VERSION
 

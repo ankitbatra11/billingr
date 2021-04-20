@@ -1,11 +1,10 @@
 package com.abatra.billingr.google;
 
-import com.abatra.android.wheelie.lifecycle.ILifecycleOwner;
+import com.abatra.android.wheelie.lifecycle.owner.ILifecycleOwner;
 import com.abatra.billingr.BillingrException;
 import com.abatra.billingr.purchase.PurchaseFetcher;
 import com.abatra.billingr.purchase.PurchaseListener;
 import com.abatra.billingr.purchase.SkuPurchase;
-import com.abatra.billingr.sku.Sku;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.Purchase;
 
@@ -15,7 +14,8 @@ import java.util.Optional;
 
 import timber.log.Timber;
 
-import static com.abatra.billingr.google.GoogleBillingUtils.*;
+import static com.abatra.billingr.google.GoogleBillingUtils.isOk;
+import static com.abatra.billingr.google.GoogleBillingUtils.reportErrorAndGet;
 import static com.android.billingclient.api.Purchase.PurchasesResult;
 
 public class GooglePurchaseFetcher implements PurchaseFetcher {
