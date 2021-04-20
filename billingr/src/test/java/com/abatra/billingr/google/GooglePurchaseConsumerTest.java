@@ -1,6 +1,6 @@
 package com.abatra.billingr.google;
 
-import com.abatra.android.wheelie.lifecycle.ILifecycleOwner;
+import com.abatra.android.wheelie.lifecycle.owner.ILifecycleOwner;
 import com.abatra.billingr.BillingrException;
 import com.abatra.billingr.purchase.ConsumePurchaseCallback;
 import com.abatra.billingr.purchase.ConsumePurchasesCallback;

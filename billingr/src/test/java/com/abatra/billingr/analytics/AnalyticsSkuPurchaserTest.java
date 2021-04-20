@@ -5,7 +5,7 @@ import android.app.Activity;
 import com.abatra.android.wheelie.chronicle.Chronicle;
 import com.abatra.android.wheelie.chronicle.model.BeginCheckoutEventParams;
 import com.abatra.android.wheelie.chronicle.model.PurchaseEventParams;
-import com.abatra.android.wheelie.lifecycle.ILifecycleOwner;
+import com.abatra.android.wheelie.lifecycle.owner.ILifecycleOwner;
 import com.abatra.billingr.BillingUnavailableCallback;
 import com.abatra.billingr.purchase.PurchaseListener;
 import com.abatra.billingr.purchase.PurchaseSkuRequest;

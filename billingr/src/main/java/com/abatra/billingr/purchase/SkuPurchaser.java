@@ -1,6 +1,6 @@
 package com.abatra.billingr.purchase;
 
-import com.abatra.android.wheelie.lifecycle.ILifecycleObserver;
+import com.abatra.android.wheelie.lifecycle.observer.ILifecycleObserver;
 import com.abatra.billingr.BillingUnavailableCallback;
 import com.abatra.billingr.BillingrException;
 import com.abatra.billingr.PurchasesNotifier;

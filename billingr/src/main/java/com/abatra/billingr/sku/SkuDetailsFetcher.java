@@ -1,6 +1,6 @@
 package com.abatra.billingr.sku;
 
-import com.abatra.android.wheelie.lifecycle.ILifecycleObserver;
+import com.abatra.android.wheelie.lifecycle.observer.ILifecycleObserver;
 import com.abatra.billingr.BillingUnavailableCallback;
 import com.abatra.billingr.BillingrException;
 
