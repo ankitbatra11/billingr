@@ -51,10 +51,11 @@ dependencies {
 
     api group: 'androidx.annotation', name: 'annotation', version: '1.2.0'
     api group: 'androidx.lifecycle', name: 'lifecycle-runtime', version: '2.3.1'
-    api group: 'com.parse.bolts', name: 'bolts-tasks', version: BOLTS_VERSION
-    api group: 'com.github.ankitbatra11', name: 'wheelie', version: '4.35.0'
 
-    implementation group: 'androidx.fragment', name: 'fragment', version: '1.3.2'
+    api group: 'com.github.ankitbatra11.wheelie', name: 'lifecycle', version: '5.0.1'
+    api group: 'com.github.ankitbatra11.wheelie', name: 'chronicle', version: '5.0.1'
+
+    implementation group: 'androidx.fragment', name: 'fragment', version: '1.3.5'
 
     implementation group: 'com.android.billingclient', name: 'billing', version: BILLING_CLIENT_VERSION
 
@@ -71,8 +72,8 @@ dependencies {
     testImplementation group: 'org.mockito', name: 'mockito-inline', version: mockitoVersion
 
     testImplementation "org.hamcrest:hamcrest:2.2"
-    testImplementation("org.awaitility:awaitility:4.0.3") {
+    testImplementation("org.awaitility:awaitility:4.1.0") {
         exclude group: 'org.hamcrest'
     }
-    testImplementation group: 'androidx.fragment', name: 'fragment', version: '1.3.2'
+    testImplementation group: 'androidx.fragment', name: 'fragment', version: '1.3.5'
 }
