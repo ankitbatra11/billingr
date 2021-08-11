@@ -78,8 +78,16 @@ public final class GoogleBillingUtils {
 
     public static BillingrException reportErrorAndGet(BillingResult billingResult, String message, Object... args) {
         BillingrException billingrException = GoogleBillingrException.from(billingResult);
-        Timber.e(billingrException, message, args);
+        if (reportError(billingResult)) {
+            Timber.e(billingrException, message, args);
+        } else {
+            Timber.i(billingrException, message, args);
+        }
         return billingrException;
+    }
+
+    private static boolean reportError(BillingResult billingResult) {
+        return billingResult.getResponseCode() != BillingClient.BillingResponseCode.SERVICE_DISCONNECTED;
     }
 
     public static List<SkuPurchase> toSkuPurchases(List<Purchase> purchases) {
